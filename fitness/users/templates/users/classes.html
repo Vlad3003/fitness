@@ -1,0 +1,43 @@
+{% extends 'users/base.html' %}
+
+{% load static %}
+
+{% block links %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'schedule/css/style.css' %}">
+{% endblock %}
+
+{% block main %}
+<div class="container">
+  <h1 class="title mb-3">{{ title }}</h1>
+
+  {% include 'schedule/includes/form-messages.html' %}
+
+  {% include 'schedule/includes/schedule-modal.html' %}
+
+  <div class="classes-block">
+    {% for day in classes %}
+    <div>
+      {% now 'Y' as current_year %}
+
+      <span class="classes-date">{% if day.date|date:'Y' == current_year %}{{ day.date|date:'j E, l'|lower }}{% else %}{{ day.date|date:'j E Y' }}{% endif %}</span>
+
+      <ul class="list-reset schedule__list schedule__list_active">
+        {% for el in day.items %}
+
+        {% include 'users/includes/schedule-item.html' with item=el.schedule canceled=el.canceled %}
+
+        {% endfor %}
+      </ul>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% include 'users/includes/pagination.html' %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'schedule/js/messages.js' %}"></script>
+<script src="{% static 'schedule/js/schedule.js' %}"></script>
+{% endblock %}

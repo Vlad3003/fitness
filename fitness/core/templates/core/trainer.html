@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+{% load static schedule_tags %}
+
+{% block title %}{{ trainer }}{% endblock %}
+
+{% block links %}
+<link rel="stylesheet" href="{% static 'schedule/css/style.css' %}">
+<link rel="stylesheet" href="{% static 'core/css/style.css' %}">
+<link rel="stylesheet" href="{% static 'core/css/media.css' %}">
+{% endblock %}
+
+{% block main %}
+<section id="card">
+  <div class="container">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'home' %}">Главная</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'trainers' %}">Команда</a></li>
+        <li class="breadcrumb-item active" aria-current="page">{{ trainer }}</li>
+      </ol>
+    </nav>
+
+    <div class="row card__row">
+      <div class="col-md-5">
+        <img class="rounded-4 w-100 sticky" src="{{ trainer.photo.url }}" alt="{{ trainer }}">
+      </div>
+
+      <div class="col-md-7">
+        <div class="block">
+          <h1 class="title">{{ trainer }}</h1>
+
+          <div class="text-block">
+            <span>Стаж работы: с {{ trainer.experience_since|date:'Y' }} года {% if trainer.experience_years %}({{ trainer.experience_years }}){% endif %}</span>
+            <span>Телефон: <a href="tel:{{ trainer.user.phone_number }}" class="link-body-emphasis">{{ trainer.user.phone_number }}</a></span>
+            <span>Электронная почта: <a href="mailto:{{ trainer.user.email }}" class="link-body-emphasis">{{ trainer.user.email }}</a></span>
+          </div>
+        </div>
+
+        <div class="block">
+          <h2 class="subtitle">Специализация</h2>
+
+          <ul class="mb-0">
+            {% for el in trainer.specialization_list %}
+            <li>{{ el|capfirst }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+
+        {% if trainer.achievements_list %}
+        <div class="block">
+          <h2 class="subtitle">Достижения</h2>
+
+          <ul class="mb-0">
+            {% for el in trainer.achievements_list %}
+            <li>{{ el|capfirst }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+        {% endif %}
+
+        <div class="block">
+          <a href="#schedule" class="btn btn-primary btn-lg">Смотреть расписание</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% if trainer.services.count %}
+<section id="cards" class="mb-5">
+  <div class="container">
+    <h2 class="mb-4 mb-sm-5 text-center">Занятия</h2>
+
+    {% include 'core/includes/services-cards.html' with services=trainer.services.all %}
+  </div>
+</section>
+{% endif %}
+
+<section id="schedule">
+  <div class="container">
+    <h2 class="text-center mb-4">Расписание</h2>
+    {% include 'schedule/includes/form-messages.html' %}
+
+    {% show_schedule request trainer_id=trainer.pk %}
+  </div>
+</section>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'schedule/js/messages.js' %}"></script>
+<script src="{% static 'schedule/js/schedule.js' %}"></script>
+{% endblock %}

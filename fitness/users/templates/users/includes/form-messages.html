@@ -1,0 +1,25 @@
+<div class="form-messages">
+  {% for message in messages %}
+  <div class="message shadow">
+    <i class="bi bi-check-circle"></i>
+    <span>{{ message }}</span>
+    <button type="button" class="btn-close"></button>
+  </div>
+  {% endfor %}
+
+  {% for field, errors in form.errors.items %}
+    {% for error in errors %}
+    <div class="message error shadow">
+      <i class="bi bi-exclamation-circle"></i>
+      <span>
+        {% if error == 'This password is too short. It must contain at least 8 characters.' %}
+        Введённый пароль слишком короткий. Он должен содержать как минимум 8 символов.
+        {% else %}
+        {{ error }}
+        {% endif %}
+      </span>
+      <button type="button" class="btn-close"></button>
+    </div>
+    {% endfor %}
+  {% endfor %}
+</div>

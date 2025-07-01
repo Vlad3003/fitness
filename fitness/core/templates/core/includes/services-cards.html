@@ -1,0 +1,17 @@
+<div class="row cards__row">
+  {% for service in services %}
+  <div class="col-md-4 col-sm-6">
+    <a href="{% url 'service' service_slug=service.slug %}">
+      <div class="card__wrap shadow-lg rounded-4">
+        <div class="card__img-container">
+          <img class="card__img" src="{{ service.photo.url }}" alt="{{ service }}">
+        </div>
+
+        <div class="card__name">
+          <h4 class="mb-0 text-center">{{ service }}</h4>
+        </div>
+      </div>
+    </a>
+  </div>
+  {% endfor %}
+</div>

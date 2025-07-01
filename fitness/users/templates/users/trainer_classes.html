@@ -1,0 +1,68 @@
+{% extends 'users/base.html' %}
+
+{% load static %}
+
+{% block main %}
+<div class="container">
+  <h1 class="title mb-3">{{ title }}</h1>
+
+  <div class="classes-block">
+    {% for day in classes %}
+    <div class="accordions">
+      {% now 'Y' as current_year %}
+
+      <span>{% if day.date|date:'Y' == current_year %}{{ day.date|date:'j E, l'|lower }}{% else %}{{ day.date|date:'j E Y' }}{% endif %}</span>
+
+      {% for el in day.items %}
+      <div class="accordion">
+        <div class="accordion-header">
+          <h4 class="mb-0">{{ el.service.name }} в {{ el.start_time|date:'H:i' }}</h4>
+
+          <span>Записано: {{ el.active_booking|length }} / {{ el.service.max_participants }}</span>
+
+          {% if el.active_booking|length %}
+          <button class="accordion-btn closed"><i class="bi bi-chevron-up"></i></button>
+          {% endif %}
+        </div>
+
+        <div class="accordion-body closed">
+          <ul class="list-reset classes-list">
+            {% for booking in el.active_booking %}
+            <li class="classes-item">
+              {% with client=booking.client %}
+
+              <div class="user-block mb-2">
+                <img src="{{ client.avatar }}" alt="{{ client }}" class="user-img">
+
+                <h5 class="mb-0">{{ client }}</h5>
+              </div>
+
+              <div>
+                <a class="link-body-emphasis" href="mailto:{{ client.email }}"><i class="bi bi-envelope"></i> {{ client.email }}</a>
+              </div>
+
+              {% if client.phone_number %}
+              <div>
+                <a class="link-body-emphasis" href="tel:{{ client.phone_number }}"><i class="bi bi-telephone"></i> {{ client.phone_number }}</a>
+              </div>
+              {% endif %}
+
+              <span><i class="bi bi-clock"></i> Время записи: {% if booking.booked_at.year == year %}{{ booking.booked_at|date:'j E в H:i' }}{% else %}{{ booking.booked_at|date:'j E Y в H:i' }}{% endif %}</span>
+              {% endwith %}
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endfor %}
+  </div>
+
+  {% include 'users/includes/pagination.html' %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'users/js/accordion.js' %}"></script>
+{% endblock %}

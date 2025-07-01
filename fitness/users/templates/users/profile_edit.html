@@ -1,0 +1,108 @@
+{% extends 'users/base.html' %}
+
+{% load static %}
+
+{% block main %}
+<div class="container">
+  <div class="wrap">
+    {% include 'users/includes/form-messages.html' %}
+
+    <div class="modal fade" id="imgModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+          <div class="modal-header border-bottom-0">
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+          </div>
+
+          <div class="modal-body py-0">
+            <img id="modalImg" class="w-100" src="{{ user.avatar }}" alt="Аватар">
+          </div>
+
+          <div class="modal-footer border-top-0">
+            <form class="m-0" action="{% url 'users:delete-photo' %}" method="post">
+              {% csrf_token %}
+              <button class="btn btn-danger" type="submit">Удалить фотографию</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <form class="form m-auto" method="post" enctype="multipart/form-data">
+      <h1 class="title">{{ title }}</h1>
+
+      {% csrf_token %}
+
+      <img id="img-preview" class="img-thumbnail pointer" src="{{ user.avatar }}" alt="Аватар" data-bs-toggle="modal" data-bs-target="#imgModal">
+
+      <div class="block">
+        {% for field in form %}
+        <div class="field-container">
+          {% if field == form.photo %}
+          <div class="file-input-container">
+            <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+          </div>
+          {% elif field == form.birth_date %}
+          <div class="date-input-container">
+            <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+
+            <div class="date-field">{{ field }}</div>
+          </div>
+          {% else %}
+          <div class="form-floating">
+            {{ field }}
+            <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+          </div>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+
+      <button class="btn btn-success py-3" type="submit"><i class="bi bi-check-lg"></i> Сохранить</button>
+
+      <a href="{% url 'users:password_change' %}" class="btn btn-link">Сменить пароль</a>
+
+      <button class="btn btn-danger py-2" type="button" data-bs-toggle="modal" data-bs-target="#deleteModal">
+        <i class="bi bi-trash"></i> Удалить аккаунт
+      </button>
+    </form>
+
+    <div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header border-bottom-0">
+            <h5 class="modal-title">Подтвердите действие</h5>
+
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+
+          <div class="modal-body">
+            <span>Вы <strong>действительно</strong> хотите <strong>удалить</strong> аккаунт?</span>
+          </div>
+
+          <div class="modal-footer flex-nowrap delete-btns p-0">
+            <button type="button" class="btn btn-link link-primary w-100 m-0 py-3 border-end rounded-0 text-decoration-none" data-bs-dismiss="modal">
+              Нет
+            </button>
+
+            <form action="{% url 'users:delete' %}" method="post" class="m-0">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-link link-danger w-100 m-0 py-3 rounded-0 text-decoration-none">
+                <strong>Да</strong>
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ block.super }}
+<script src="{% static 'users/js/img-change.js' %}"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.inputmask/5.0.8/jquery.inputmask.min.js"></script>
+<script src="{% static 'users/js/phone-mask.js' %}"></script>
+{% endblock %}

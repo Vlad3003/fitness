@@ -1,0 +1,36 @@
+@media (min-width: 768px) {
+  .user-btn-container {
+    order: 1;
+  }
+
+  .logo-block {
+    margin-right: 75px;
+  }
+
+  #navbar {
+    margin-right: auto;
+  }
+}
+
+@media (max-width: 576px) {
+  .user-btn {
+    font-size: 14px;
+  }
+
+  .user-btn>.user-img {
+    width: 35px;
+  }
+
+  .logo {
+    height: 40px;
+    width: 108px;
+  }
+
+  .footer__row {
+    flex-direction: column-reverse;
+  }
+
+  .footer__contacts {
+    justify-content: start;
+  }
+}

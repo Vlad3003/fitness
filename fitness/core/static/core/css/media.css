@@ -1,0 +1,23 @@
+@media (max-width: 992px) {
+  .card__row {
+    --bs-gutter-x: 40px;
+  }
+}
+
+@media (max-width: 576px) {
+  .breadcrumb {
+    margin-bottom: 25px;
+  }
+
+  #card:not(:last-child) {
+    margin-bottom: 75px;
+  }
+
+  .section {
+    margin-bottom: 75px;
+  }
+
+  .map>iframe {
+    height: 250px;
+  }
+}

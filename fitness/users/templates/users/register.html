@@ -1,0 +1,51 @@
+{% extends 'users/base.html' %}
+
+{% load static %}
+
+{% block header %}
+{% endblock %}
+
+{% block main %}
+<div class="container">
+  <div class="wrap">
+    {% include 'users/includes/form-messages.html' %}
+
+    <form class="form m-auto" method="post">
+      {% csrf_token %}
+
+      <input type="hidden" name="next" value="{{ next }}"/>
+
+      {% include 'core/includes/logo.html' %}
+
+      <h1 class="title">{{ title }}</h1>
+
+      <div class="block">
+        {% for field in form %}
+        <div class="field-container">
+          <div class="form-floating">
+            {{ field }}
+            <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+
+            {% if field == form.password1 or field == form.password2 %}
+            <button class="btn-reset password-control" type="button"><i class="bi bi-eye-fill"></i></button>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+      <button class="btn btn-primary py-3" type="submit">Зарегистрироваться</button>
+
+      <span class="center">Уже есть аккаунт? <a href="{% url 'users:login' %}" class="btn btn-link">Войти</a></span>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block footer %}
+{% endblock %}
+
+{% block scripts %}
+{{ block.super }}
+<script src="{% static 'users/js/password-control.js' %}"></script>
+{% endblock %}

@@ -1,0 +1,368 @@
+html,
+body {
+  height: 100%;
+}
+
+.container {
+  height: 100%;
+}
+
+.wrap {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.form {
+  --bg-color: var(--bs-tertiary-bg);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 400px;
+  width: 100%;
+  padding: 10px;
+  padding-top: 20px;
+  border-radius: 0.5rem;
+  background-color: var(--bg-color);
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.form>.logo {
+  align-self: center;
+}
+
+.form>.logo>rect {
+  fill: var(--bg-color);
+}
+
+.title {
+  margin: 0;
+  text-align: center;
+  font-size: 30px;
+}
+
+.block {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.password-control {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+  font-size: 20px;
+  color: gray;
+  transition: opacity 0.3s ease-in-out, outline 0.3s ease-in-out;
+}
+
+.password-control:focus-visible {
+  outline: 1px solid gray;
+}
+
+.password-control:hover {
+  opacity: 0.7;
+}
+
+.password-control:active {
+  opacity: 0.5;
+}
+
+input[name="password"],
+input[name="password1"],
+input[name="password2"],
+input[name="old_password"],
+input[name="new_password1"],
+input[name="new_password2"] {
+  padding-right: 45px !important;
+}
+
+input[name="password"].is-invalid,
+input[name="password1"].is-invalid,
+input[name="password2"].is-invalid,
+input[name="old_password"].is-invalid,
+input[name="new_password1"].is-invalid,
+input[name="new_password2"].is-invalid {
+  background-image: none;
+}
+
+input[name="password"].is-valid,
+input[name="password1"].is-valid,
+input[name="password2"].is-valid,
+input[name="old_password"].is-valid,
+input[name="new_password1"].is-valid,
+input[name="new_password2"].is-valid {
+  background-image: none;
+}
+
+.is-invalid~.password-control {
+  color: var(--bs-form-invalid-border-color);
+}
+
+.is-valid~.password-control {
+  color: var(--bs-form-valid-border-color);
+}
+
+.btn-link {
+  padding: 0;
+  width: fit-content;
+}
+
+.relative {
+  position: relative;
+}
+
+.form-messages {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  top: 100px;
+  z-index: 110;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-radius: 0.375rem;
+  padding: 0 15px;
+  max-width: 1100px;
+  width: 100%;
+}
+
+.message::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background-color: var(--bs-body-bg);
+}
+
+.message {
+  --color-rgb: 0, 255, 0;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  border-radius: inherit;
+  padding: 10px;
+  background-color: rgba(var(--color-rgb), 0.1);
+}
+
+.message.error {
+  --color-rgb: 255, 0, 0;
+}
+
+.message>i {
+  flex-shrink: 0;
+  color: rgb(var(--color-rgb));
+  font-size: 20px;
+}
+
+.message>.btn-close {
+  flex-shrink: 0;
+}
+
+.message>span {
+  flex-grow: 1;
+}
+
+.center {
+  text-align: center;
+}
+
+.mt-100 {
+  margin-top: 100px;
+}
+
+.file-input-container {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.file-input-container>.form-label {
+  margin-bottom: 0;
+}
+
+.invalid-feedback {
+  display: block;
+}
+
+.date-input-container {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.date-input-container>.form-label {
+  margin-bottom: 0;
+}
+
+.date-field {
+  display: grid;
+  grid-template-columns: 5fr 9fr 6fr;
+  gap: 5px;
+}
+
+.delete-btns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+/* profile */
+
+.profile-container {
+  max-width: 800px;
+}
+
+.heading {
+  margin-bottom: 0;
+  font-size: 28px;
+  text-align: center;
+}
+
+.profile-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.profile-img {
+  width: 150px;
+  height: 150px;
+}
+
+.profile-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.profile-item {
+  padding: 20px;
+  border-radius: 0.5rem;
+  background-color: var(--bs-secondary-bg);
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  display: grid;
+  gap: 5px 20px;
+  grid-template-columns: 1fr 1fr;
+}
+
+.profile-item h5 {
+  margin-bottom: 0;
+}
+
+.accordions {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.accordion {
+  border-radius: 0.375rem;
+  background-color: var(--bs-tertiary-bg);
+}
+
+.accordion-header {
+  width: 100%;
+  position: relative;
+  padding: 15px 10px;
+  border-radius: inherit;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  transition: background-color 0.3s ease-in-out;
+}
+
+.accordion-header:hover {
+  background-color: var(--bs-secondary-bg);
+}
+
+.accordion-title {
+  margin-bottom: 0;
+  font-size: 25px;
+}
+
+.accordion-btn {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  padding: inherit;
+  border-radius: 0.375rem;
+  display: flex;
+  justify-content: end;
+  align-items: center;
+  width: 100%;
+  outline: none;
+  border: none;
+  background-color: transparent;
+  font-size: 25px;
+  color: var(--bs-primary);
+}
+
+.accordion-btn:focus-visible {
+  outline: 1px solid var(--bs-body-color);
+  outline-offset: 2px;
+}
+
+.accordion-body {
+  padding: 10px;
+  border-top: 1px solid var(--bs-border-color);
+}
+
+.accordion-body.closed {
+  display: none;
+}
+
+.bi-chevron-up::before {
+  transition: transform 0.4s ease-in-out;
+  font-size: 20px;
+}
+
+.closed .bi-chevron-up::before {
+  transform: rotate(-180deg);
+}
+
+.classes-block {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.classes-block:not(:last-child) {
+  margin-bottom: 40px;
+}
+
+.pagination {
+  --bs-pagination-focus-box-shadow: none;
+}
+
+.classes-date {
+  display: block;
+  margin-bottom: 20px;
+}
+
+.classes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.classes-item {
+  padding: 10px 20px;
+  border-radius: 0.5rem;
+  background-color: var(--bs-secondary-bg);
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  display: flex;
+  flex-direction: column;
+}

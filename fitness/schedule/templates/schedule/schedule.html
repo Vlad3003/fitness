@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% load static schedule_tags %}
+
+{% block links %}
+<link rel="stylesheet" href="{% static 'schedule/css/style.css' %}">
+{% endblock %}
+
+{% block main %}
+<section id="schedule">
+  <div class="container">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'home' %}">Главная</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Расписание</li>
+      </ol>
+    </nav>
+
+    <h1 class="text-center mb-5">{{ title }}</h1>
+
+    {% include 'schedule/includes/form-messages.html' %}
+
+    {% show_schedule request %}
+  </div>
+</section>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'schedule/js/messages.js' %}"></script>
+<script src="{% static 'schedule/js/schedule.js' %}"></script>
+{% endblock %}

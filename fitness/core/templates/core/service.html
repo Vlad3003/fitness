@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% load static schedule_tags %}
+
+{% block title %}{{ service }}{% endblock %}
+
+{% block links %}
+<link rel="stylesheet" href="{% static 'schedule/css/style.css' %}">
+<link rel="stylesheet" href="{% static 'core/css/style.css' %}">
+<link rel="stylesheet" href="{% static 'core/css/media.css' %}">
+{% endblock %}
+
+{% block main %}
+<section id="card">
+  <div class="container">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'home' %}">Главная</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'services' %}">Занятия</a></li>
+        <li class="breadcrumb-item active" aria-current="page">{{ service }}</li>
+      </ol>
+    </nav>
+
+    <div class="row card__row">
+      <div class="col-md-5">
+        <img class="rounded-4 w-100 sticky" src="{{ service.photo.url }}" alt="{{ service }}">
+      </div>
+
+      <div class="col-md-7">
+        <div class="block">
+          <h1 class="title">{{ service }}</h1>
+
+          <div class="text-block">
+            <span><i class="bi bi-clock"></i> Продолжительность: {{ service.duration_minutes}} мин.</span>
+          </div>
+        </div>
+
+        <div class="block">
+          {{ service.description|linebreaks }}
+        </div>
+
+        <div class="block">
+          <a href="#schedule" class="btn btn-primary btn-lg">Смотреть расписание</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% if service.trainers.count %}
+<section id="cards" class="mb-5">
+  <div class="container">
+    <h2 class="mb-4 mb-sm-5 text-center">Тренеры</h2>
+
+    {% include 'core/includes/trainers-cards.html' with trainers=service.trainers.all %}
+  </div>
+</section>
+{% endif %}
+
+<section id="schedule">
+  <div class="container">
+    <h2 class="text-center mb-4">Расписание</h2>
+
+    {% include 'schedule/includes/form-messages.html' %}
+
+    {% show_schedule request service_id=service.pk %}
+  </div>
+</section>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'schedule/js/messages.js' %}"></script>
+<script src="{% static 'schedule/js/schedule.js' %}"></script>
+{% endblock %}

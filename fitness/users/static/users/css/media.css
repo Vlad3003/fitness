@@ -1,0 +1,13 @@
+@media (max-width: 576px) {
+  .form {
+    --bg-color: var(--bs-body-bg);
+    padding: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .profile-item {
+    grid-template-columns: none;
+    grid-template-rows: 1fr 1fr;
+  }
+}

@@ -1,0 +1,40 @@
+<li class="schedule__item"
+    data-color="{{ item.service.pk }}"
+    data-service-url="{% url 'service' service_slug=item.service.slug %}"
+    data-date="{{ item.start_time|date:'j E, l'|lower }}"
+    data-service-photo="{{ item.service.photo.url }}"
+    data-trainer-photo="{{ item.trainer.photo.url }}"
+    data-trainer-url="{% url 'trainer' trainer_slug=item.trainer.slug %}"
+    data-schedule-id="{{ item.pk }}"
+    data-available="{% if item.count_remained_seats and item.in_future %}true{% else %}false{% endif %}"
+    data-is-booked="{% if not canceled %}true{% else %}false{% endif %}"
+    data-can-cancel="{% if not canceled and item.day_before %}true{% else %}false{% endif %}">
+
+  <h5 class="mb-0 schedule__name">{{ item.service }}</h5>
+
+  <div class="text-block">
+    <span class="schedule-time-range">
+      <time datetime="{{ item.start_time|date:'c' }}">{{ item.start_time|date:'H:i' }}</time>
+      <span> - </span>
+      {% with end_time=item.start_time|add:item.service.duration %}
+      <time datetime="{{ end_time|date:'c' }}">{{ end_time|date:'H:i' }}</time>
+      {% endwith %}
+    </span>
+
+    <span class="text-body-secondary schedule-time-duration"><i class="bi bi-clock"></i> {{ item.service.duration_minutes }} мин.</span>
+  </div>
+
+  <span class="schedule__trainer">{{ item.trainer }}</span>
+
+  {% if item.in_future and item.count_remained_seats %}
+  <span class="text-body-secondary">Свободно мест: {{ item.count_remained_seats }}</span>
+  {% endif %}
+
+  {% if canceled %}
+  <strong class="text-danger">Запись отменена</strong>
+  {% elif item.in_future %}
+  <strong class="text-info">Вы записаны</strong>
+  {% endif %}
+
+  <a href="" class="schedule__link" data-bs-toggle="modal" data-bs-target="#scheduleModal"></a>
+</li>

@@ -1,0 +1,45 @@
+<div class="modal fade" id="scheduleModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header border-bottom-0">
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+      </div>
+
+      <div class="modal-body">
+        <div class="activity-content">
+          <h3 id="modal-title" class="activity-title">
+            <a id="activity-service-link" class="link-body-emphasis" href=""></a>
+          </h3>
+
+          <div class="text-block">
+            <span id="modal-date" class="text-center"></span>
+            <span id="modal-time-range" class="text-center"></span>
+            <span id="modal-time-duration" class="text-body-secondary text-center"></span>
+          </div>
+
+          <img id="modal-service-img" class="rounded-4 w-100" src="" alt="">
+
+          <hr class="w-100 my-0">
+
+          <div class="modal-trainer">
+            <img id="modal-trainer-img" class="rounded-circle activity-trainer-img" src="" alt="">
+            <a id="modal-trainer-link" class="link-body-emphasis" href=""></a>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer p-0 border-top-0">
+        <form id="modalForm" action="" method="post" class="w-100"
+              data-booking-url="{% url 'schedule:booking' %}"
+              data-cancel-url="{% url 'schedule:cancel' %}">
+
+          {% csrf_token %}
+          <input type="hidden" name="next" value="{{ request.get_full_path }}"/>
+          <input id="scheduleId" type="hidden" name="schedule_id" value="">
+          <button id="bookingBtn" class="btn btn-primary btn-lg w-100" type="submit">Записаться</button>
+          <button id="cancelBtn" class="btn btn-danger btn-lg w-100" type="submit">Отменить запись</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

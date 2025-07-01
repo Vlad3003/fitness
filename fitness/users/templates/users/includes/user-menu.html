@@ -1,0 +1,44 @@
+<div class="user-btn-container">
+  {% if user.is_authenticated %}
+  <div class="dropdown text-end">
+    <button class="btn user-btn user-block dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+      <img class="user-img" src="{{ user.avatar }}" alt="Аватар">
+
+      <span>{{ user|truncatechars:15 }}</span>
+    </button>
+
+    <ul class="dropdown-menu dropdown-menu-md-end text-small">
+      {% for item in menu %}
+
+      {% if item %}
+      <li>
+        <a class="dropdown-item{% if request.path == item.url %} active{% endif %}" href="{{ item.url }}">
+          {% if item.icon_class %}<i class="bi {{ item.icon_class }}"></i> {% endif %}{{ item.name }}
+        </a>
+      </li>
+      {% else %}
+      <li>
+        <hr class="dropdown-divider">
+      </li>
+      {% endif %}
+
+      {% endfor %}
+
+      <li>
+        <hr class="dropdown-divider">
+      </li>
+
+      <li>
+        <form method="post" action="{% url 'users:logout' %}">
+          {% csrf_token %}
+          <button class="dropdown-item btn link-danger" type="submit">
+            <i class="bi bi-box-arrow-in-right"></i> Выйти
+          </button>
+        </form>
+      </li>
+    </ul>
+  </div>
+  {% else %}
+  <a class="btn btn-primary" href="{% url 'users:login' %}">Войти</a>
+  {% endif %}
+</div>

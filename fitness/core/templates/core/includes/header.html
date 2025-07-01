@@ -1,0 +1,36 @@
+{% load static user_tags %}
+
+<header class="py-3 border-bottom header shadow-sm">
+  <div class="container">
+    <nav class="navbar navbar-expand-md header__navbar">
+      {% show_user_menu request %}
+
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar"
+              aria-controls="navbar" aria-expanded="false">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="navbar">
+        <ul class="navbar-nav">
+          <li class="nav-item logo-block">
+            <a href="{% url 'home' %}" aria-label="Логотип">
+              {% include 'core/includes/logo.html' %}
+            </a>
+          </li>
+
+          <li class="nav-item">
+            <a href="{% url 'trainers' %}" class="link-body-emphasis">Команда</a>
+          </li>
+
+          <li class="nav-item">
+            <a href="{% url 'services' %}" class="link-body-emphasis">Занятия</a>
+          </li>
+
+          <li class="nav-item">
+            <a href="{% url 'schedule:schedule' %}" class="link-body-emphasis">Расписание</a>
+          </li>
+        </ul>
+      </div>
+    </nav>
+  </div>
+</header>
