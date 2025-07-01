@@ -51,7 +51,14 @@ class Schedule(models.Model):
 
     @property
     def booking_count(self) -> int:
-        return getattr(self, "not_canceled_booking_count", 0)
+        if hasattr(self, "not_canceled_booking_count"):
+            count = getattr(self, "not_canceled_booking_count")
+        elif hasattr(self, "not_canceled_booking"):
+            count = len(getattr(self, "not_canceled_booking"))
+        else:
+            count = 0
+
+        return count
 
     @property
     def count_remained_seats(self) -> int:
