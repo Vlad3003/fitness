@@ -27,6 +27,7 @@
   </div>
 </section>
 
+{% if trainers %}
 <section class="popular-trainers section">
   <div class="container">
     <h2 class="text-center mb-4">Тренеры месяца</h2>
@@ -34,7 +35,9 @@
     {% include 'core/includes/trainers-cards.html' %}
   </div>
 </section>
+{% endif %}
 
+{% if services %}
 <section class="popular-services section">
   <div class="container">
     <h2 class="text-center mb-4">Занятия месяца</h2>
@@ -42,6 +45,7 @@
     {% include 'core/includes/services-cards.html' %}
   </div>
 </section>
+{% endif %}
 
 <section class="advantages section">
   <div class="container">

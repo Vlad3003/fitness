@@ -26,6 +26,7 @@ def home(request):
                 & Q(schedule__start_time__date__range=date_range),
             ),
         )
+        .filter(count_distinct_clients__gt=0, count_clients__gt=0)
         .select_related("user")
         .order_by(
             "-count_distinct_clients",
@@ -49,7 +50,9 @@ def home(request):
                 filter=Q(schedule__booking__canceled=False)
                 & Q(schedule__start_time__date__range=date_range),
             ),
-        ).order_by("-count_distinct_clients", "-count_clients", "name")
+        )
+        .filter(count_distinct_clients__gt=0, count_clients__gt=0)
+        .order_by("-count_distinct_clients", "-count_clients", "name")
     )[:3]
 
     context = {
