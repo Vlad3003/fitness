@@ -22,7 +22,7 @@
 
     <div class="row card__row">
       <div class="col-md-5">
-        <img class="rounded-4 w-100 sticky" src="{{ trainer.photo.url }}" alt="{{ trainer }}">
+        <img class="rounded-4 w-100 sticky" src="{{ trainer.avatar }}" alt="{{ trainer }}">
       </div>
 
       <div class="col-md-7">
@@ -31,7 +31,11 @@
 
           <div class="text-block">
             <span>Стаж работы: с {{ trainer.experience_since|date:'Y' }} года {% if trainer.experience_years %}({{ trainer.experience_years }}){% endif %}</span>
+
+            {% if trainer.user.phone_number %}
             <span>Телефон: <a href="tel:{{ trainer.user.phone_number }}" class="link-body-emphasis">{{ trainer.user.phone_number }}</a></span>
+            {% endif %}
+
             <span>Электронная почта: <a href="mailto:{{ trainer.user.email }}" class="link-body-emphasis">{{ trainer.user.email }}</a></span>
           </div>
         </div>

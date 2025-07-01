@@ -1,9 +1,10 @@
-from django.contrib.auth import get_user_model
-from django.db import models
-
 from datetime import date
 
+from django.contrib.auth import get_user_model
+from django.db import models
 from django.urls import reverse
+
+from fitness.settings import DEFAULT_SERVICE_IMAGE, DEFAULT_TRAINER_IMAGE
 
 User = get_user_model()
 
@@ -15,9 +16,7 @@ class Trainer(models.Model):
     slug = models.SlugField(
         max_length=100, unique=True, db_index=True, verbose_name="Slug"
     )
-    specialization = models.TextField(
-        blank=True, null=True, verbose_name="Специализация"
-    )
+    specialization = models.TextField(verbose_name="Специализация")
     achievements = models.TextField(blank=True, null=True, verbose_name="Достижения")
     experience_since = models.DateField(blank=True, null=True, verbose_name="Стаж с")
     photo = models.ImageField(
@@ -31,6 +30,12 @@ class Trainer(models.Model):
 
     def __str__(self) -> str:
         return str(self.user)
+
+    @property
+    def avatar(self) -> str:
+        if self.photo and hasattr(self.photo, "url"):
+            return self.photo.url
+        return DEFAULT_TRAINER_IMAGE
 
     @property
     def experience_years(self) -> str:
@@ -92,6 +97,12 @@ class Service(models.Model):
 
     def __str__(self) -> str:
         return self.name
+
+    @property
+    def avatar(self) -> str:
+        if self.photo and hasattr(self.photo, "url"):
+            return self.photo.url
+        return DEFAULT_SERVICE_IMAGE
 
     @property
     def duration_minutes(self) -> int:

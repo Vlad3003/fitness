@@ -162,3 +162,5 @@ EMAIL_ADMIN = EMAIL_HOST_USER
 AUTH_USER_MODEL = "users.User"
 
 DEFAULT_USER_IMAGE = MEDIA_URL + "users/default.png"
+DEFAULT_TRAINER_IMAGE = MEDIA_URL + "trainers/default.svg"
+DEFAULT_SERVICE_IMAGE = MEDIA_URL + "services/default.svg"
