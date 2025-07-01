@@ -19,13 +19,11 @@ class TrainerAdmin(admin.ModelAdmin):
                     "specialization",
                     "achievements",
                     "experience_since",
-                    "photo",
-                    "photo_preview",
                 )
             },
         ),
+        ("Медиа", {"fields": ("photo", "photo_preview")}),
     )
-
     search_fields = (
         "user__username",
         "user__email",
