@@ -29,6 +29,7 @@ def show_schedule(request: HttpRequest, **kwargs):
             date=TruncDate("start_time"),
             not_canceled_booking_count=Count("booking", Q(booking__canceled=False)),
         )
+        .order_by("start_time")
     )
 
     grouped = []
@@ -50,5 +51,6 @@ def show_schedule(request: HttpRequest, **kwargs):
         "days": days,
         "user_booked": user_booked,
         "request": request,
+        "user": request.user
     }
     return context

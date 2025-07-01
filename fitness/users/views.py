@@ -159,6 +159,7 @@ class ClassesListView(LoginRequiredMixin, ListView):
                 Prefetch(
                     "schedule__booking",
                     queryset=Booking.not_canceled.all(),
+                    to_attr="not_canceled_booking"
                 )
             )
             .annotate(date=TruncDate("schedule__start_time"))
