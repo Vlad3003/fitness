@@ -18,14 +18,14 @@
     </h2>
 
     <div class="accordions">
-      <div class="accordion">
+      <div class="accordion closed">
         <div class="accordion-header">
           <h3 class="accordion-title">Персональные данные</h3>
 
-          <button class="accordion-btn closed"><i class="bi bi-chevron-up"></i></button>
+          <button class="accordion-btn"><i class="bi bi-chevron-up"></i></button>
         </div>
 
-        <div class="accordion-body closed">
+        <div class="accordion-body">
           <div class="d-flex flex-column mb-3">
             <a href="{% url 'users:profile_edit' %}" class="link-info align-self-end">Изменить</a>
           </div>
@@ -58,14 +58,14 @@
         </div>
       </div>
 
-      <div class="accordion">
+      <div class="accordion closed">
         <div class="accordion-header">
           <h3 class="accordion-title">Дополнительно</h3>
 
-          <button class="accordion-btn closed"><i class="bi bi-chevron-up"></i></button>
+          <button class="accordion-btn"><i class="bi bi-chevron-up"></i></button>
         </div>
 
-        <div class="accordion-body closed">
+        <div class="accordion-body">
           <ul class="list-reset profile-list">
             <li class="profile-item">
               <h5><i class="bi bi-calendar4-event"></i> Дата регистрации</h5>

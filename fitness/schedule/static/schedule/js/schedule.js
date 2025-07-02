@@ -37,7 +37,7 @@ $(document).ready(function () {
       canCancel: item.data("can-cancel")
     }
 
-    modal.find("#modal-title").attr("data-color", item.data("color"))
+    modal.find("#modal-title").css("--border-color", item.css("--border-color"))
       .find("a").text(service.name).attr("href", service.url);
 
     modal.find("#modal-date").text(schedule.date);

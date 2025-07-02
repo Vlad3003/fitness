@@ -89,6 +89,7 @@ class Service(models.Model):
     max_participants = models.PositiveIntegerField(
         default=10, null=False, blank=False, verbose_name="Кол-во мест"
     )
+    color = models.CharField(max_length=7, default="#6c757d", verbose_name="Цвет")
 
     class Meta:
         verbose_name = "Услуга"

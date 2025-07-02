@@ -41,35 +41,6 @@
   display: flex;
 }
 
-[data-color="1"],
-[data-color="2"],
-[data-color="11"] {
-  --border-color: var(--bs-blue);
-}
-
-[data-color="3"],
-[data-color="4"] {
-  --border-color: var(--bs-red);
-}
-
-[data-color="6"],
-[data-color="8"] {
-  --border-color: var(--bs-teal);
-}
-
-[data-color="5"],
-[data-color="7"] {
-  --border-color: var(--bs-yellow);
-}
-
-[data-color="9"] {
-  --border-color: var(--bs-indigo);
-}
-
-[data-color="10"] {
-  --border-color: var(--bs-orange);
-}
-
 .schedule__item:hover {
   background-color: var(--bs-secondary-bg);
 }
