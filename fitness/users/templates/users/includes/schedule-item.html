@@ -1,5 +1,5 @@
 <li class="schedule__item"
-    data-color="{{ item.service.pk }}"
+    style="--border-color: {{ item.service.color }};"
     data-service-url="{% url 'service' service_slug=item.service.slug %}"
     data-date="{{ item.start_time|date:'j E, l'|lower }}"
     data-service-photo="{{ item.service.avatar }}"

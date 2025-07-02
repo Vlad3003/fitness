@@ -1,7 +1,13 @@
 $(document).ready(function () {
+  $(".accordion.closed").each(function () {
+    $(this).find(".accordion-body").hide();
+  });
+
   $(".accordion-btn").click(function () {
     const item = $(this).closest(".accordion");
-    $(this).toggleClass("closed");
-    item.find(".accordion-body").slideToggle(400);
+    const itemBody = item.find(".accordion-body");
+
+    itemBody.slideToggle(400);
+    item.toggleClass("closed");
   });
 });

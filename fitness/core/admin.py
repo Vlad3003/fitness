@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.utils.safestring import mark_safe
 
+from .forms import ServiceAdminForm
 from .models import Service, Trainer
 
 
@@ -67,6 +68,7 @@ class TrainerAdmin(admin.ModelAdmin):
 
 @admin.register(Service)
 class ServiceAdmin(admin.ModelAdmin):
+    form = ServiceAdminForm
     list_display = (
         "name",
         "duration_minutes",
@@ -74,11 +76,12 @@ class ServiceAdmin(admin.ModelAdmin):
         "photo_preview",
         "trainer_count",
         "max_participants",
+        "color_preview",
     )
     prepopulated_fields = {"slug": ("name",)}
     readonly_fields = ("photo_preview",)
     fieldsets = (
-        (None, {"fields": ("name", "slug", "description")}),
+        (None, {"fields": ("name", "slug", "description", "color")}),
         (
             "Стоимость, длительность, количество мест",
             {"fields": ("price", "duration", "max_participants")},
@@ -111,6 +114,12 @@ class ServiceAdmin(admin.ModelAdmin):
     @admin.display(description="Кол-во тренеров")
     def trainer_count(self, service: Service):
         return service.trainers.count()
+
+    @admin.display(description="Цвет", ordering="color")
+    def color_preview(self, service: Service):
+        return mark_safe(
+            f'<div style="width: 40px; height: 20px; background-color: {service.color}"></div>'
+        )
 
     def get_queryset(self, request):
         return super().get_queryset(request).prefetch_related("trainers")

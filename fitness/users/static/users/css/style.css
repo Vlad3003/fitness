@@ -276,6 +276,7 @@ input[name="new_password2"].is-valid {
   position: relative;
   padding: 15px 10px;
   border-radius: inherit;
+  border-bottom: 1px solid var(--bs-border-color);
   display: flex;
   flex-direction: column;
   gap: 5px;
@@ -317,11 +318,6 @@ input[name="new_password2"].is-valid {
 
 .accordion-body {
   padding: 10px;
-  border-top: 1px solid var(--bs-border-color);
-}
-
-.accordion-body.closed {
-  display: none;
 }
 
 .bi-chevron-up::before {
@@ -329,7 +325,11 @@ input[name="new_password2"].is-valid {
   font-size: 20px;
 }
 
-.closed .bi-chevron-up::before {
+.accordion.closed>.accordion-header {
+  border-bottom: none;
+}
+
+.accordion.closed .bi-chevron-up::before {
   transform: rotate(-180deg);
 }
 
@@ -365,4 +365,12 @@ input[name="new_password2"].is-valid {
   box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
   display: flex;
   flex-direction: column;
+}
+
+.border-l {
+  border-left: 5px solid var(--border-color);
+}
+
+.border-b {
+  border-bottom: 1px solid var(--bs-border-color);
 }
