@@ -3,12 +3,12 @@
 <header class="py-3 border-bottom header shadow-sm">
   <div class="container">
     <nav class="navbar navbar-expand-md header__navbar">
-      {% show_user_menu request %}
-
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar"
               aria-controls="navbar" aria-expanded="false">
         <span class="navbar-toggler-icon"></span>
       </button>
+
+      {% show_user_menu request %}
 
       <div class="collapse navbar-collapse" id="navbar">
         <ul class="navbar-nav">
