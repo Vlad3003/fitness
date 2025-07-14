@@ -2,6 +2,11 @@
 
 {% load static %}
 
+{% block links %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'schedule/css/style.css' %}">
+{% endblock %}
+
 {% block main %}
 <div class="container">
   <h1 class="title mb-3">{{ title }}</h1>
@@ -16,7 +21,19 @@
       {% for el in day.items %}
       <div class="accordion closed">
         <div class="accordion-header border-l" style="--border-color: {{ el.service.color }};">
-          <h4 class="mb-0">{{ el.service.name }} в {{ el.start_time|date:'H:i' }}</h4>
+          <h5 class="mb-0">{{ el.service }}</h5>
+
+          <div class="text-block">
+            <span class="schedule-time-range">
+              <time datetime="{{ el.start_time|date:'c' }}">{{ el.start_time|date:'H:i' }}</time>
+              <span> - </span>
+              {% with end_time=el.start_time|add:el.service.duration %}
+              <time datetime="{{ end_time|date:'c' }}">{{ end_time|date:'H:i' }}</time>
+              {% endwith %}
+            </span>
+
+            <span class="text-body-secondary schedule-time-duration"><i class="bi bi-clock"></i> {{ el.service.duration_minutes }} мин.</span>
+          </div>
 
           <span>Записано: {{ el.active_booking|length }} / {{ el.service.max_participants }}</span>
 
@@ -34,7 +51,7 @@
               <div class="user-block mb-2">
                 <img src="{{ client.avatar }}" alt="{{ client }}" class="user-img">
 
-                <h5 class="mb-0">{{ client }}</h5>
+                <b class="mb-0">{{ client }}</b>
               </div>
 
               <div>
