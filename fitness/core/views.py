@@ -1,16 +1,19 @@
 from dateutil.relativedelta import relativedelta
-from django.utils import timezone
-from django.db.models import Prefetch, Count, Q
+from django.db.models import Count, Prefetch, Q
 from django.shortcuts import render
+from django.utils import timezone
 from django.views.generic import DetailView, ListView
+from rest_framework import generics
+from rest_framework.permissions import IsAuthenticated
 
-from .models import Trainer, Service
+from .models import Service, Trainer
+from .serializers import ServiceSerializer, TrainerSerializer
 
 
 def home(request):
     start_date = timezone.localdate(timezone.now()).replace(day=1)
     end_date = start_date + relativedelta(months=1)
-    date_range = [start_date, end_date]
+    date_range = (start_date, end_date)
 
     popular_trainers = (
         Trainer.objects.annotate(
@@ -91,3 +94,15 @@ class ServicesView(ListView):
     template_name = "core/services.html"
     context_object_name = "services"
     extra_context = {"title": "Занятия"}
+
+
+class TrainerListAPIView(generics.ListAPIView):
+    queryset = Trainer.objects.select_related("user").order_by("id")
+    serializer_class = TrainerSerializer
+    permission_classes = (IsAuthenticated,)
+
+
+class ServiceListAPIView(generics.ListAPIView):
+    queryset = Service.objects.prefetch_related("trainers").order_by("id")
+    serializer_class = ServiceSerializer
+    permission_classes = (IsAuthenticated,)

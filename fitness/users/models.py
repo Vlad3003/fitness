@@ -4,7 +4,6 @@ from django.db import models
 
 from fitness.settings import DEFAULT_USER_IMAGE
 
-
 phone_validator = RegexValidator(
     regex=r"^\+7 \(\d{3}\) \d{3} \d{2}-\d{2}$",
     message="Телефон должен быть в формате '+7 (777) 777 77-77'",
@@ -22,8 +21,11 @@ class User(AbstractUser):
         null=True,
         verbose_name="Номер телефона",
         max_length=18,
-        validators=[phone_validator],
+        validators=(phone_validator,),
         unique=True,
+        error_messages={
+            "unique": "Пользователь с таким номером телефона уже существует."
+        },
     )
     gender = models.CharField(
         blank=True,
@@ -38,9 +40,19 @@ class User(AbstractUser):
 
     @property
     def avatar(self) -> str:
+        return self.avatar_or_none or DEFAULT_USER_IMAGE
+
+    @property
+    def avatar_or_none(self) -> str | None:
         if self.photo and hasattr(self.photo, "url"):
             return self.photo.url
-        return DEFAULT_USER_IMAGE
+        if (
+            hasattr(self, "trainer")
+            and self.trainer.photo
+            and hasattr(self.trainer.photo, "url")
+        ):
+            return self.trainer.photo.url
+        return None
 
     @property
     def full_name(self) -> str:

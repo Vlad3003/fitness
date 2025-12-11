@@ -30,10 +30,12 @@
           <h1 class="title">{{ trainer }}</h1>
 
           <div class="text-block">
-            <span>Стаж работы: с {{ trainer.experience_since|date:'Y' }} года {% if trainer.experience_years %}({{ trainer.experience_years }}){% endif %}</span>
+            {% if trainer.experience %}
+            <span>Стаж работы: {{ trainer.experience }}</span>
+            {% endif %}
 
             {% if trainer.user.phone_number %}
-            <span>Телефон: <a href="tel:{{ trainer.user.phone_number }}" class="link-body-emphasis">{{ trainer.user.phone_number }}</a></span>
+            <span>Номер телефона: <a href="tel:{{ trainer.user.phone_number }}" class="link-body-emphasis">{{ trainer.user.phone_number }}</a></span>
             {% endif %}
 
             <span>Электронная почта: <a href="mailto:{{ trainer.user.email }}" class="link-body-emphasis">{{ trainer.user.email }}</a></span>

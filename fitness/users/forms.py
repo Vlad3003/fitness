@@ -230,11 +230,6 @@ class UpdateUserForm(forms.ModelForm):
             ),
             "gender": forms.Select(attrs={**select_class, "placeholder": "Пол"}),
         }
-        error_messages = {
-            "phone_number": {
-                "unique": "Пользователь с таким номером телефона уже существует.",
-            },
-        }
 
     def _post_clean(self):
         res = super()._post_clean()
