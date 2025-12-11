@@ -1,6 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import RegexValidator
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 from fitness.settings import DEFAULT_USER_IMAGE
 
@@ -11,6 +12,13 @@ phone_validator = RegexValidator(
 
 
 class User(AbstractUser):
+    email = models.EmailField(
+        _("email address"),
+        unique=True,
+        error_messages={
+            "unique": "Пользователь с таким адресом электронной почты уже существует."
+        },
+    )
     photo = models.ImageField(
         upload_to="users/%Y/%m/%d/", blank=True, null=True, verbose_name="Фотография"
     )
@@ -21,7 +29,7 @@ class User(AbstractUser):
         default="",
         verbose_name="Номер телефона",
         max_length=18,
-        validators=(phone_validator,)
+        validators=(phone_validator,),
     )
     gender = models.CharField(
         blank=True,
@@ -43,7 +51,7 @@ class User(AbstractUser):
                 fields=("phone_number",),
                 condition=~models.Q(phone_number=""),
                 name="unique_nonempty_phone_number",
-                violation_error_message="Пользователь с таким номером телефона уже существует."
+                violation_error_message="Пользователь с таким номером телефона уже существует.",
             ),
         )
 
