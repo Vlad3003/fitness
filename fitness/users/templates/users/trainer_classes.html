@@ -35,16 +35,16 @@
             <span class="text-body-secondary schedule-time-duration"><i class="bi bi-clock"></i> {{ el.service.duration_min }} мин.</span>
           </div>
 
-          <span>Записано: {{ el.active_booking|length }} / {{ el.service.max_participants }}</span>
+          <span>Записано: {{ el.active_bookings|length }} / {{ el.service.max_participants }}</span>
 
-          {% if el.active_booking|length %}
+          {% if el.active_bookings|length %}
           <button class="accordion-btn"><i class="bi bi-chevron-up"></i></button>
           {% endif %}
         </div>
 
         <div class="accordion-body">
           <ul class="list-reset classes-list">
-            {% for booking in el.active_booking %}
+            {% for booking in el.active_bookings %}
             <li class="classes-item">
               {% with client=booking.client %}
 

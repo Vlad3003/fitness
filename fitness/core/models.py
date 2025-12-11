@@ -17,7 +17,7 @@ class Trainer(models.Model):
         max_length=100, unique=True, db_index=True, verbose_name="Slug"
     )
     specialization = models.TextField(verbose_name="Специализация")
-    achievements = models.TextField(blank=True, null=True, verbose_name="Достижения")
+    achievements = models.TextField(blank=True, default="", verbose_name="Достижения")
     experience_since = models.DateField(blank=True, null=True, verbose_name="Стаж с")
     photo = models.ImageField(
         upload_to="trainers/", blank=True, null=True, verbose_name="Фото"
@@ -77,7 +77,7 @@ class Service(models.Model):
     slug = models.SlugField(
         max_length=200, db_index=True, unique=True, verbose_name="Slug"
     )
-    description = models.TextField(blank=True, null=True, verbose_name="Описание")
+    description = models.TextField(blank=True, default="", verbose_name="Описание")
     duration = models.DurationField(
         verbose_name="Продолжительность",
         help_text="Укажите продолжительность в секундах или в формате 'ЧЧ:ММ:СС'",

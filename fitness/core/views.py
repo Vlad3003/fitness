@@ -18,14 +18,14 @@ def home(request):
     popular_trainers = (
         Trainer.objects.annotate(
             count_distinct_clients=Count(
-                "schedule__booking__client",
-                filter=Q(schedule__booking__canceled=False)
+                "schedule__bookings__client",
+                filter=Q(schedule__bookings__canceled=False)
                 & Q(schedule__start_time__date__range=date_range),
                 distinct=True,
             ),
             count_clients=Count(
-                "schedule__booking__client",
-                filter=Q(schedule__booking__canceled=False)
+                "schedule__bookings__client",
+                filter=Q(schedule__bookings__canceled=False)
                 & Q(schedule__start_time__date__range=date_range),
             ),
         )
@@ -43,14 +43,14 @@ def home(request):
     popular_services = (
         Service.objects.annotate(
             count_distinct_clients=Count(
-                "schedule__booking__client",
-                filter=Q(schedule__booking__canceled=False)
+                "schedule__bookings__client",
+                filter=Q(schedule__bookings__canceled=False)
                 & Q(schedule__start_time__date__range=date_range),
                 distinct=True,
             ),
             count_clients=Count(
-                "schedule__booking__client",
-                filter=Q(schedule__booking__canceled=False)
+                "schedule__bookings__client",
+                filter=Q(schedule__bookings__canceled=False)
                 & Q(schedule__start_time__date__range=date_range),
             ),
         )

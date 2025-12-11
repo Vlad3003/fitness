@@ -32,12 +32,12 @@ class ScheduleAdmin(admin.ModelAdmin):
         "start_time",
         "service_duration",
         "max_participants",
-        "booking_count",
+        "bookings_count",
         "count_remained_seats",
     )
     autocomplete_fields = ("service", "trainer")
     date_hierarchy = "start_time"
-    readonly_fields = ("booking_count", "count_remained_seats")
+    readonly_fields = ("bookings_count", "count_remained_seats")
     search_fields = ("start_time__gte",)
     list_filter = ("service", "trainer")
     actions = ("duplicate_schedule",)
@@ -53,8 +53,8 @@ class ScheduleAdmin(admin.ModelAdmin):
         return schedule.service.max_participants
 
     @admin.display(description="Записано")
-    def booking_count(self, schedule: Schedule) -> int:
-        return schedule.booking_count
+    def bookings_count(self, schedule: Schedule) -> int:
+        return schedule.bookings_count
 
     @admin.display(description="Свободных мест")
     def count_remained_seats(self, schedule: Schedule) -> int:
@@ -66,7 +66,7 @@ class ScheduleAdmin(admin.ModelAdmin):
             .get_queryset(request)
             .select_related("service", "trainer__user")
             .annotate(
-                not_canceled_booking_count=Count("booking", Q(booking__canceled=False))
+                not_canceled_bookings_count=Count("bookings", Q(bookings__canceled=False))
             )
         )
 
