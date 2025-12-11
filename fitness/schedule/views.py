@@ -49,7 +49,7 @@ def get_schedule(
         .filter(start_time__date__range=schedule_date_range, **kwargs)
         .annotate(
             date=TruncDate("start_time"),
-            not_canceled_booking_count=Count("booking", Q(booking__canceled=False)),
+            not_canceled_bookings_count=Count("bookings", Q(bookings__canceled=False)),
             is_user_booked=Case(
                 When(
                     Exists(
@@ -81,9 +81,9 @@ def get_booked_schedule(request: HttpRequest) -> QuerySet[Booking]:
         )
         .prefetch_related(
             Prefetch(
-                "schedule__booking",
+                "schedule__bookings",
                 queryset=Booking.not_canceled.all(),
-                to_attr="not_canceled_booking",
+                to_attr="not_canceled_bookings",
             )
         )
         .annotate(date=TruncDate("schedule__start_time"))
@@ -97,9 +97,9 @@ def get_trainer_schedule(trainer: Trainer) -> QuerySet[Schedule]:
         .select_related("service")
         .prefetch_related(
             Prefetch(
-                "booking",
+                "bookings",
                 Booking.not_canceled.select_related("client", "client__trainer").all(),
-                to_attr="active_booking",
+                to_attr="active_bookings",
             )
         )
         .annotate(date=TruncDate("start_time"))
@@ -125,7 +125,7 @@ def to_book(
         schedule_obj = (
             Schedule.objects.select_related("trainer__user", "service")
             .annotate(
-                not_canceled_booking_count=Count("booking", Q(booking__canceled=False))
+                not_canceled_bookings_count=Count("bookings", Q(bookings__canceled=False))
             )
             .get(pk=schedule_id)
         )
@@ -164,8 +164,8 @@ def to_book(
             modified_schedule_obj = (
                 Schedule.objects.select_related("trainer__user", "service")
                 .annotate(
-                    not_canceled_booking_count=Count(
-                        "booking", Q(booking__canceled=False)
+                    not_canceled_bookings_count=Count(
+                        "bookings", Q(bookings__canceled=False)
                     )
                 )
                 .get(pk=schedule_id)
@@ -217,9 +217,9 @@ def cancel(
             .select_related("schedule", "schedule__service")
             .prefetch_related(
                 Prefetch(
-                    "schedule__booking",
+                    "schedule__bookings",
                     queryset=Booking.not_canceled.all(),
-                    to_attr="not_canceled_booking",
+                    to_attr="not_canceled_bookings",
                 )
             )
             .first()
@@ -246,8 +246,8 @@ def cancel(
             modified_schedule_obj = (
                 Schedule.objects.select_related("trainer__user", "service")
                 .annotate(
-                    not_canceled_booking_count=Count(
-                        "booking", Q(booking__canceled=False)
+                    not_canceled_bookings_count=Count(
+                        "bookings", Q(bookings__canceled=False)
                     )
                 )
                 .get(pk=schedule_id)

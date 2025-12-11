@@ -5,8 +5,8 @@ from django.db import models
 from fitness.settings import DEFAULT_USER_IMAGE
 
 phone_validator = RegexValidator(
-    regex=r"^\+7 \(\d{3}\) \d{3} \d{2}-\d{2}$",
-    message="Телефон должен быть в формате '+7 (777) 777 77-77'",
+    regex=r"^\+7 \(\d{3}\) \d{3}-\d{2}-\d{2}$",
+    message="Телефон должен быть в формате '+7 (777) 777-77-77'",
 )
 
 
@@ -14,29 +14,38 @@ class User(AbstractUser):
     photo = models.ImageField(
         upload_to="users/%Y/%m/%d/", blank=True, null=True, verbose_name="Фотография"
     )
-    middle_name = models.CharField(blank=True, null=True, verbose_name="Отчество")
+    middle_name = models.CharField(blank=True, default="", verbose_name="Отчество")
     birth_date = models.DateField(blank=True, null=True, verbose_name="Дата рождения")
     phone_number = models.CharField(
         blank=True,
-        null=True,
+        default="",
         verbose_name="Номер телефона",
         max_length=18,
-        validators=(phone_validator,),
-        unique=True,
-        error_messages={
-            "unique": "Пользователь с таким номером телефона уже существует."
-        },
+        validators=(phone_validator,)
     )
     gender = models.CharField(
         blank=True,
-        null=True,
+        default="",
         verbose_name="Пол",
         max_length=1,
         choices=[
+            ("", "Не указан"),
             ("М", "Мужской"),
             ("Ж", "Женский"),
         ],
     )
+
+    class Meta:
+        verbose_name = "Пользователь"
+        verbose_name_plural = "Пользователи"
+        constraints = (
+            models.UniqueConstraint(
+                fields=("phone_number",),
+                condition=~models.Q(phone_number=""),
+                name="unique_nonempty_phone_number",
+                violation_error_message="Пользователь с таким номером телефона уже существует."
+            ),
+        )
 
     @property
     def avatar(self) -> str:
@@ -56,8 +65,10 @@ class User(AbstractUser):
 
     @property
     def full_name(self) -> str:
-        _full_name = f"{self.last_name} {self.first_name} {self.middle_name}"
-        return _full_name.replace("None", "").strip()
+        _full_name = " ".join(
+            [s for s in (self.last_name, self.first_name, self.middle_name) if s]
+        )
+        return _full_name
 
     def __str__(self) -> str:
         return self.full_name or self.username

@@ -118,7 +118,7 @@ class BookingSerializer(serializers.ModelSerializer):
 
 
 class TrainerScheduleSerializer(serializers.ModelSerializer):
-    active_booking = BookingSerializer(many=True)
+    active_bookings = BookingSerializer(many=True)
 
     class Meta:
         model = Schedule
@@ -127,5 +127,5 @@ class TrainerScheduleSerializer(serializers.ModelSerializer):
             "service_id",
             "start_time",
             "end_time",
-            "active_booking",
+            "active_bookings",
         )

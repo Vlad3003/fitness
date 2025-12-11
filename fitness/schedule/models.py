@@ -21,9 +21,7 @@ class Schedule(models.Model):
     trainer = models.ForeignKey(
         Trainer, on_delete=models.CASCADE, verbose_name="Тренер"
     )
-    start_time = models.DateTimeField(
-        blank=False, null=False, verbose_name="Время начала"
-    )
+    start_time = models.DateTimeField(verbose_name="Время начала")
 
     class Meta:
         verbose_name = "Расписание"
@@ -35,7 +33,12 @@ class Schedule(models.Model):
             "trainer__user__first_name",
             "trainer__user__middle_name",
         )
-        unique_together = ("trainer", "start_time")
+        constraints = (
+            models.UniqueConstraint(
+                fields=("trainer", "start_time"),
+                name="unique_trainer_start_time"
+            ),
+        )
 
     def __str__(self):
         local_time = timezone.localtime(self.start_time)
@@ -49,11 +52,11 @@ class Schedule(models.Model):
         return f"{self.service.name} - {formatted}"
 
     @property
-    def booking_count(self) -> int:
-        if hasattr(self, "not_canceled_booking_count"):
-            count = getattr(self, "not_canceled_booking_count")
-        elif hasattr(self, "not_canceled_booking"):
-            count = len(getattr(self, "not_canceled_booking"))
+    def bookings_count(self) -> int:
+        if hasattr(self, "not_canceled_bookings_count"):
+            count = getattr(self, "not_canceled_bookings_count")
+        elif hasattr(self, "not_canceled_bookings"):
+            count = len(getattr(self, "not_canceled_bookings"))
         else:
             count = 0
 
@@ -61,7 +64,7 @@ class Schedule(models.Model):
 
     @property
     def count_remained_seats(self) -> int:
-        return self.service.max_participants - self.booking_count
+        return self.service.max_participants - self.bookings_count
 
     @property
     def end_time(self) -> datetime:
@@ -91,7 +94,7 @@ class Booking(models.Model):
     schedule = models.ForeignKey(
         Schedule,
         on_delete=models.CASCADE,
-        related_name="booking",
+        related_name="bookings",
         verbose_name="Занятие",
     )
     booked_at = models.DateTimeField(auto_now_add=True, verbose_name="Время записи")
@@ -104,7 +107,12 @@ class Booking(models.Model):
         verbose_name = "Запись"
         verbose_name_plural = "Записи"
         ordering = ("booked_at",)
-        unique_together = ("schedule", "client")
+        constraints = (
+            models.UniqueConstraint(
+                fields=("schedule", "client"),
+                name="unique_schedule_client_booking"
+            ),
+        )
 
     def __str__(self):
         return f"{self.schedule} - {self.client}"
