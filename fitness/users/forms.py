@@ -102,14 +102,6 @@ class RegisterUserForm(UserCreationForm):
             ),
         }
 
-    def clean_email(self):
-        email = self.cleaned_data["email"]
-        if get_user_model().objects.filter(email=email).exists():
-            raise forms.ValidationError(
-                "Пользователь с таким адресом электронной почты уже существует."
-            )
-        return email
-
     def _post_clean(self):
         super()._post_clean()
 
