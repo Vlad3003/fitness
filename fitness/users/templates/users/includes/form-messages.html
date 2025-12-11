@@ -1,8 +1,14 @@
 <div class="form-messages">
   {% for message in messages %}
-  <div class="message shadow">
+  <div class="message shadow{% if message.tags == 'error' %} error{% endif %}">
+    {% if message.tags == 'error' %}
+    <i class="bi bi-exclamation-circle"></i>
+    {% else %}
     <i class="bi bi-check-circle"></i>
+    {% endif %}
+
     <span>{{ message }}</span>
+
     <button type="button" class="btn-close"></button>
   </div>
   {% endfor %}

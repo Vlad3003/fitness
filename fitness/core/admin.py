@@ -109,7 +109,7 @@ class ServiceAdmin(admin.ModelAdmin):
         description="Продолжительность (мин)", ordering="duration", empty_value="-"
     )
     def duration_minutes(self, service: Service):
-        return service.duration_minutes
+        return service.duration_min
 
     @admin.display(description="Кол-во тренеров")
     def trainer_count(self, service: Service):

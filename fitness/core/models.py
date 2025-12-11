@@ -38,11 +38,16 @@ class Trainer(models.Model):
         return DEFAULT_TRAINER_IMAGE
 
     @property
-    def experience_years(self) -> str:
+    def experience(self) -> str | None:
+        if not self.experience_since:
+            return None
+
+        result = f"с {self.experience_since.year} года"
+
         years = (date.today() - self.experience_since).days // 365
 
         if not years:
-            return ""
+            return result
 
         if years % 10 == 1 and years % 100 != 11:
             word = "год"
@@ -51,7 +56,7 @@ class Trainer(models.Model):
         else:
             word = "лет"
 
-        return f"{years} {word}"
+        return result + f" ({years} {word})"
 
     @property
     def specialization_list(self) -> list[str]:
@@ -106,7 +111,7 @@ class Service(models.Model):
         return DEFAULT_SERVICE_IMAGE
 
     @property
-    def duration_minutes(self) -> int:
+    def duration_min(self) -> int:
         if self.duration:
             return int(self.duration.total_seconds()) // 60
         return 0

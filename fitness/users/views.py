@@ -1,6 +1,5 @@
 from itertools import groupby
 
-from core.models import Trainer
 from django.contrib import messages
 from django.contrib.auth import get_user_model, logout
 from django.contrib.auth.decorators import login_required
@@ -9,13 +8,18 @@ from django.contrib.auth.views import LoginView, PasswordChangeView
 from django.contrib.auth.views import PasswordResetConfirmView as PswResetConfirmView
 from django.contrib.auth.views import PasswordResetView as PswResetView
 from django.core.exceptions import PermissionDenied
-from django.db.models import Prefetch
-from django.db.models.functions import TruncDate
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect
 from django.urls import reverse, reverse_lazy
 from django.views.generic import CreateView, ListView, TemplateView, UpdateView
-from schedule.models import Booking, Schedule
+from rest_framework import status
+from rest_framework.generics import CreateAPIView, RetrieveUpdateDestroyAPIView
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework_simplejwt.views import TokenObtainPairView
+from schedule.models import Booking
+from schedule.views import get_booked_schedule, get_trainer_schedule
 
 from .forms import (
     LoginUserForm,
@@ -25,6 +29,7 @@ from .forms import (
     UpdateUserForm,
     UserPasswordChangeForm,
 )
+from .serializers import CreateUserSerializer, TokenSerializer, UserSerializer
 
 
 class LoginUser(LoginView):
@@ -118,24 +123,50 @@ class ProfileEditView(LoginRequiredMixin, UpdateView):
         return super().form_invalid(form)
 
 
+def delete_user(request: HttpRequest) -> dict[str, bool | str]:
+    request.user.is_active = False
+    request.user.save()
+    return {
+        "success": True,
+        "message": "Ваш аккаунт был успешно удалён. Спасибо, что были с нами!",
+    }
+
+
 @login_required
-def delete_user(request: HttpRequest):
+def delete_user_view(request: HttpRequest):
     if request.method == "POST":
-        request.user.is_active = False
-        request.user.save()
+        result = delete_user(request)
         logout(request)
-        messages.success(
-            request, "Ваш аккаунт был успешно удалён. Спасибо, что были с нами!"
-        )
+        messages.success(request, result["message"])
         return redirect(reverse("users:login"))
     return HttpResponse(status=405)
 
 
-@login_required
-def delete_user_photo(request: HttpRequest):
-    if request.method == "POST":
+def delete_user_photo(request: HttpRequest) -> dict[str, bool | str]:
+    result: dict[str, bool | str] = {"success": False, "message": ""}
+
+    if request.user.photo:
         request.user.photo.delete()
-        messages.success(request, "Ваша фотография была успешно удалена.")
+        request.user.save()
+        result["message"] = "Ваша фотография была успешно удалена."
+        result["success"] = True
+    else:
+        result["message"] = "У вас пока нет фотографии профиля"
+
+    return result
+
+
+@login_required
+def delete_user_photo_view(request: HttpRequest):
+    if request.method == "POST":
+        res = delete_user_photo(request)
+        message = res["message"]
+
+        if res["success"]:
+            messages.success(request, message)
+        else:
+            messages.error(request, message)
+
         return redirect(reverse("users:profile_edit"))
     return HttpResponse(status=405)
 
@@ -147,24 +178,7 @@ class ClassesListView(LoginRequiredMixin, ListView):
     paginate_by = 10
 
     def get_queryset(self):
-        return (
-            Booking.objects.filter(client=self.request.user)
-            .select_related(
-                "schedule",
-                "schedule__service",
-                "schedule__trainer",
-                "schedule__trainer__user",
-            )
-            .prefetch_related(
-                Prefetch(
-                    "schedule__booking",
-                    queryset=Booking.not_canceled.all(),
-                    to_attr="not_canceled_booking"
-                )
-            )
-            .annotate(date=TruncDate("schedule__start_time"))
-            .order_by("-date", "schedule__start_time__time")
-        )
+        return get_booked_schedule(self.request)
 
     def get_context_data(self, *, object_list=None, **kwargs):
         context = super().get_context_data(object_list=object_list, **kwargs)
@@ -186,27 +200,12 @@ class TrainerClassesListView(LoginRequiredMixin, ListView):
     template_name = "users/trainer_classes.html"
     extra_context = {"title": "Мои тренировки"}
     paginate_by = 20
-    trainer = None
 
     def get_queryset(self):
-        self.trainer = Trainer.objects.filter(user__pk=self.request.user.pk).first()
-
-        if not self.trainer:
+        if not hasattr(self.request.user, "trainer"):
             raise PermissionDenied("У вас нет доступа к этой странице")
 
-        return (
-            Schedule.objects.filter(trainer=self.trainer)
-            .select_related("service")
-            .prefetch_related(
-                Prefetch(
-                    "booking",
-                    Booking.not_canceled.select_related("client").all(),
-                    to_attr="active_booking",
-                )
-            )
-            .annotate(date=TruncDate("start_time"))
-            .order_by("-date", "start_time__time")
-        )
+        return get_trainer_schedule(self.request.user.trainer)
 
     def get_context_data(self, *, object_list=None, **kwargs):
         context = super().get_context_data(object_list=object_list, **kwargs)
@@ -220,3 +219,34 @@ class TrainerClassesListView(LoginRequiredMixin, ListView):
 
         context["classes"] = grouped
         return context
+
+
+class TokensObtainView(TokenObtainPairView):
+    serializer_class = TokenSerializer
+
+
+class UserApiView(RetrieveUpdateDestroyAPIView):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = UserSerializer
+
+    def get_object(self):
+        return self.request.user
+
+    def delete(self, request, *args, **kwargs):
+        delete_user(request)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class CreateUserApiView(CreateAPIView):
+    serializer_class = CreateUserSerializer
+
+
+class DeleteUserPhotoView(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    @staticmethod
+    def delete(request: HttpRequest):
+        result = delete_user_photo(request)
+        result["user"] = UserSerializer(request.user).data
+
+        return Response(result, status=status.HTTP_200_OK)

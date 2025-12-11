@@ -1,12 +1,110 @@
+from datetime import date, timedelta
+
+from core.models import Trainer
 from django.contrib import messages
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models import Count, Q
+from django.db.models import (
+    BooleanField,
+    Case,
+    Count,
+    Exists,
+    OuterRef,
+    Prefetch,
+    Q,
+    QuerySet,
+    When,
+)
+from django.db.models.functions import TruncDate
 from django.http import HttpRequest, HttpResponse
-from django.shortcuts import render, redirect
+from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils.safestring import mark_safe
+from rest_framework import status
+from rest_framework.exceptions import PermissionDenied
+from rest_framework.generics import GenericAPIView, ListAPIView
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from .models import Booking, Schedule
+from .serializers import (
+    BookedScheduleSerializer,
+    ScheduleBookingSerializer,
+    ScheduleSerializer,
+    TrainerScheduleSerializer,
+)
+
+
+def get_schedule(
+    request: HttpRequest, **kwargs
+) -> tuple[QuerySet[Schedule], list[date]]:
+    today = date.today()
+    end_date = today + timedelta(days=6)
+    schedule_date_range = (today, end_date)
+
+    days = [today + timedelta(days=i) for i in range(7)]
+
+    schedule_objs = (
+        Schedule.objects.select_related("service", "trainer__user")
+        .filter(start_time__date__range=schedule_date_range, **kwargs)
+        .annotate(
+            date=TruncDate("start_time"),
+            not_canceled_booking_count=Count("booking", Q(booking__canceled=False)),
+            is_user_booked=Case(
+                When(
+                    Exists(
+                        Booking.not_canceled.filter(
+                            schedule=OuterRef("pk"),
+                            client=request.user if not request.user.is_anonymous else 0,
+                        )
+                    ),
+                    then=True,
+                ),
+                default=False,
+                output_field=BooleanField(),
+            ),
+        )
+        .order_by("start_time")
+    )
+
+    return schedule_objs, days
+
+
+def get_booked_schedule(request: HttpRequest) -> QuerySet[Booking]:
+    return (
+        Booking.objects.filter(client=request.user)
+        .select_related(
+            "schedule",
+            "schedule__service",
+            "schedule__trainer",
+            "schedule__trainer__user",
+        )
+        .prefetch_related(
+            Prefetch(
+                "schedule__booking",
+                queryset=Booking.not_canceled.all(),
+                to_attr="not_canceled_booking",
+            )
+        )
+        .annotate(date=TruncDate("schedule__start_time"))
+        .order_by("-date", "schedule__start_time__time")
+    )
+
+
+def get_trainer_schedule(trainer: Trainer) -> QuerySet[Schedule]:
+    return (
+        Schedule.objects.filter(trainer=trainer)
+        .select_related("service")
+        .prefetch_related(
+            Prefetch(
+                "booking",
+                Booking.not_canceled.select_related("client", "client__trainer").all(),
+                to_attr="active_booking",
+            )
+        )
+        .annotate(date=TruncDate("start_time"))
+        .order_by("-date", "start_time__time")
+    )
 
 
 def schedule(request: HttpRequest):
@@ -14,18 +112,16 @@ def schedule(request: HttpRequest):
     return render(request, "schedule/schedule.html", context)
 
 
-def __to_book(request: HttpRequest):
-    if request.user.is_anonymous:
-        messages.error(
-            request,
-            mark_safe(
-                "Для записи на занятие необходимо <strong>авторизоваться</strong>!"
-            ),
-        )
-        return None
+def to_book(
+    request: HttpRequest, schedule_id: int | None, return_item: bool = False
+) -> dict[str, str | bool | None | Schedule]:
+    result: dict[str, bool | str | None | Schedule] = {
+        "success": False,
+        "message": "",
+        "item": None,
+    }
 
     try:
-        schedule_id = request.POST.get("schedule_id")
         schedule_obj = (
             Schedule.objects.select_related("trainer__user", "service")
             .annotate(
@@ -33,98 +129,243 @@ def __to_book(request: HttpRequest):
             )
             .get(pk=schedule_id)
         )
+
     except (ValueError, ObjectDoesNotExist):
-        messages.error(request, f"Не удалось записаться на занятие!")
-        return None
+        result["message"] = "Не удалось записаться на занятие!"
+        return result
 
     reservation = Booking.objects.filter(
         schedule=schedule_obj, client=request.user
     ).first()
 
     if reservation and not reservation.canceled:
-        messages.error(request, f"Вы уже записаны на '{schedule_obj}'!")
-        return None
+        result["message"] = f"Вы уже записаны на '{schedule_obj}'!"
 
-    if schedule_obj.trainer.user == request.user:
-        messages.error(request, f"Вы не можете записаться на '{schedule_obj}'")
-        return None
+    elif schedule_obj.trainer.user.id == request.user.id:
+        result["message"] = f"Вы не можете записаться на '{schedule_obj}'"
 
-    if not schedule_obj.count_remained_seats:
-        messages.error(
-            request, f"Не осталось свободных мест на занятие '{schedule_obj}'!"
-        )
-        return None
+    elif not schedule_obj.count_remained_seats:
+        result["message"] = f"Не осталось свободных мест на занятие '{schedule_obj}'!"
 
-    if not schedule_obj.in_future:
-        messages.error(
-            request,
-            f"Записаться на '{schedule_obj}' уже нельзя!",
-        )
-        return None
+    elif not schedule_obj.in_future:
+        result["message"] = f"Записаться на '{schedule_obj}' уже нельзя!"
 
-    if reservation:
-        reservation.canceled = False
-        reservation.save()
     else:
-        Booking.objects.create(schedule=schedule_obj, client=request.user)
+        if reservation:
+            reservation.canceled = False
+            reservation.save()
+        else:
+            Booking.objects.create(schedule=schedule_obj, client=request.user)
 
-    messages.success(request, f"Вы успешно записались на '{schedule_obj}'.")
+        result["success"] = True
+        result["message"] = f"Вы успешно записались на '{schedule_obj}'."
 
-    return None
+        if return_item:
+            modified_schedule_obj = (
+                Schedule.objects.select_related("trainer__user", "service")
+                .annotate(
+                    not_canceled_booking_count=Count(
+                        "booking", Q(booking__canceled=False)
+                    )
+                )
+                .get(pk=schedule_id)
+            )
+
+            setattr(modified_schedule_obj, "is_user_booked", True)
+            result["item"] = modified_schedule_obj
+
+    return result
 
 
 def booking(request: HttpRequest):
     if request.method != "POST":
         return HttpResponse(status=405)
 
+    if request.user.is_anonymous:
+        messages.error(
+            request,
+            mark_safe(
+                "Для записи на занятие необходимо <strong>авторизоваться</strong>!"
+            ),
+        )
+    else:
+        schedule_id = request.POST.get("schedule_id")
+        result = to_book(request, schedule_id)
+
+        if result["success"]:
+            messages.success(request, result["message"])
+        else:
+            messages.error(request, result["message"])
+
     redirect_url = request.POST.get("next", reverse("schedule:schedule"))
-    __to_book(request)
 
     return redirect(redirect_url)
 
 
-def __cancel(request: HttpRequest):
-    if request.user.is_anonymous:
-        messages.error(request, f"Не удалось отменить занятие!")
-        return None
+def cancel(
+    request: HttpRequest, schedule_id: int | None, return_item: bool = False
+) -> dict[str, bool | str | None | Schedule]:
+    result: dict[str, bool | str | None | Schedule] = {
+        "success": False,
+        "message": "",
+        "item": None,
+    }
 
     try:
-        schedule_id = request.POST.get("schedule_id")
-
         reservation = (
             Booking.objects.filter(schedule_id=schedule_id, client=request.user)
             .select_related("schedule", "schedule__service")
+            .prefetch_related(
+                Prefetch(
+                    "schedule__booking",
+                    queryset=Booking.not_canceled.all(),
+                    to_attr="not_canceled_booking",
+                )
+            )
             .first()
         )
+
     except (ValueError, ObjectDoesNotExist):
-        messages.error(request, f"Не удалось отменить занятие!")
-        return None
+        result["message"] = f"Не удалось отменить запись!"
+        return result
 
-    if reservation and reservation.canceled:
-        messages.error(request, f"Не удалось отменить занятие!")
-        return None
+    if not reservation or reservation.canceled:
+        result["message"] = f"Не удалось отменить запись!"
 
-    if reservation.schedule.day_before:
+    elif not reservation.schedule.day_before:
+        result["message"] = f"Отменить запись на '{reservation.schedule}' уже нельзя!"
+
+    else:
         reservation.canceled = True
         reservation.save()
 
-        messages.success(
-            request, f"Вы успешно отменили запись на '{reservation.schedule}'."
-        )
+        result["success"] = True
+        result["message"] = f"Вы успешно отменили запись на '{reservation.schedule}'."
 
-    else:
-        messages.error(
-            request, f"Отменить запись на '{reservation.schedule}' уже нельзя!"
-        )
+        if return_item:
+            modified_schedule_obj = (
+                Schedule.objects.select_related("trainer__user", "service")
+                .annotate(
+                    not_canceled_booking_count=Count(
+                        "booking", Q(booking__canceled=False)
+                    )
+                )
+                .get(pk=schedule_id)
+            )
 
-    return None
+            result["item"] = modified_schedule_obj
+
+    return result
 
 
-def cancel(request: HttpRequest):
+def booking_cancel(request: HttpRequest):
     if request.method != "POST":
         return HttpResponse(status=405)
 
+    if request.user.is_anonymous:
+        messages.error(request, f"Не удалось отменить занятие!")
+
+    else:
+        schedule_id = request.POST.get("schedule_id")
+        result = cancel(request, schedule_id)
+
+        if result["success"]:
+            messages.success(request, result["message"])
+        else:
+            messages.error(request, result["message"])
+
     redirect_url = request.POST.get("next", reverse("schedule:schedule"))
-    __cancel(request)
 
     return redirect(redirect_url)
+
+
+class ScheduleAPIView(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    @staticmethod
+    def get(request):
+        schedule_objs, days = get_schedule(request)
+
+        result = {
+            "days": days,
+            "items": ScheduleSerializer(
+                schedule_objs, many=True, context={"request": request}
+            ).data,
+        }
+
+        return Response(result, status=status.HTTP_200_OK)
+
+
+class BookedScheduleAPIView(ListAPIView):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = BookedScheduleSerializer
+
+    def get_queryset(self):
+        return get_booked_schedule(self.request)
+
+
+class TrainerScheduleListAPIView(ListAPIView):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = TrainerScheduleSerializer
+
+    def get_queryset(self):
+        if not hasattr(self.request.user, "trainer"):
+            raise PermissionDenied()
+
+        trainer = getattr(self.request.user, "trainer")
+        return get_trainer_schedule(trainer)
+
+    def get(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(
+            queryset, many=True, context={"request": request}
+        )
+        return Response(serializer.data)
+
+
+class ScheduleBookingAPIView(GenericAPIView):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = ScheduleBookingSerializer
+
+    def post(self, request):
+        serializer = self.get_serializer(data=request.data)
+
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        schedule_id = serializer.validated_data["schedule_id"]
+        result = to_book(request, schedule_id, return_item=True)
+
+        if result["item"]:
+            result["item"] = ScheduleSerializer(
+                result["item"], context={"request": request}
+            ).data
+
+        return Response(result, status=status.HTTP_200_OK)
+
+
+class BookingCancelAPIView(GenericAPIView):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = ScheduleBookingSerializer
+
+    def post(self, request):
+        serializer = self.get_serializer(data=request.data)
+
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        schedule_id = serializer.validated_data["schedule_id"]
+        result = cancel(request, schedule_id, return_item=True)
+
+        if result["item"]:
+            result["item"] = ScheduleSerializer(
+                result["item"], context={"request": request}
+            ).data
+
+        return Response(result, status=status.HTTP_200_OK)

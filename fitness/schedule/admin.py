@@ -46,7 +46,7 @@ class ScheduleAdmin(admin.ModelAdmin):
 
     @admin.display(description="Продолжительность (мин)")
     def service_duration(self, schedule: Schedule) -> int:
-        return schedule.service.duration_minutes
+        return schedule.service.duration_min
 
     @admin.display(description="Кол-во мест", ordering="service__max_participants")
     def max_participants(self, schedule: Schedule) -> int:
@@ -84,7 +84,7 @@ class ScheduleAdmin(admin.ModelAdmin):
         try:
             Schedule.objects.bulk_create(new_schedule)
             self.message_user(request, f"Добавлено записей - {len(new_schedule)}.")
-        except IntegrityError as e:
+        except IntegrityError:
             self.message_user(
                 request,
                 "Найдены дубликаты расписания! Проверьте данные и попробуйте ещё раз!",

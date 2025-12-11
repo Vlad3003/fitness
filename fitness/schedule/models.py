@@ -1,11 +1,10 @@
-from datetime import timedelta
+from datetime import datetime, timedelta
 
+from core.models import Service, Trainer
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.template.defaultfilters import date as date_filter
 from django.utils import timezone
-
-from core.models import Trainer, Service
 
 User = get_user_model()
 
@@ -43,9 +42,9 @@ class Schedule(models.Model):
         now = timezone.localtime(timezone.now())
 
         if now.year == local_time.year:
-            formatted = date_filter(local_time, "j E H:i")
+            formatted = date_filter(local_time, "j E в H:i")
         else:
-            formatted = date_filter(local_time, "j E Y H:i")
+            formatted = date_filter(local_time, "j E Y в H:i")
 
         return f"{self.service.name} - {formatted}"
 
@@ -63,6 +62,14 @@ class Schedule(models.Model):
     @property
     def count_remained_seats(self) -> int:
         return self.service.max_participants - self.booking_count
+
+    @property
+    def end_time(self) -> datetime:
+        return timezone.localtime(self.start_time + self.service.duration)
+
+    @property
+    def is_available(self) -> bool:
+        return bool(self.count_remained_seats > 0 and self.in_future)
 
     def __time_before(self, **kwargs) -> bool:
         now = timezone.now()
