@@ -110,22 +110,18 @@ class ScheduleBookingSerializer(serializers.Serializer):
 
 
 class BookingSerializer(serializers.ModelSerializer):
-    client = UserShortSerializer()
-
     class Meta:
         model = Booking
-        fields = ("id", "client", "booked_at")
+        fields = ("id", "schedule_id", "client_id", "booked_at")
 
 
 class TrainerScheduleSerializer(serializers.ModelSerializer):
-    active_bookings = BookingSerializer(many=True)
-
     class Meta:
         model = Schedule
-        fields = (
-            "id",
-            "service_id",
-            "start_time",
-            "end_time",
-            "active_bookings",
-        )
+        fields = ("id", "service_id", "start_time", "end_time")
+
+
+class TrainerScheduleResponseSerializer(serializers.Serializer):
+    items = TrainerScheduleSerializer(many=True)
+    clients = UserShortSerializer(many=True)
+    bookings = BookingSerializer(many=True)

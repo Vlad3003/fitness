@@ -90,7 +90,12 @@ class Schedule(models.Model):
 
 
 class Booking(models.Model):
-    client = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Клиент")
+    client = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="bookings",
+        verbose_name="Клиент"
+    )
     schedule = models.ForeignKey(
         Schedule,
         on_delete=models.CASCADE,
