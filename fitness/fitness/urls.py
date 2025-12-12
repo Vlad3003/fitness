@@ -29,7 +29,7 @@ from schedule.views import (
     BookedScheduleAPIView,
     ScheduleBookingAPIView,
     BookingCancelAPIView,
-    TrainerScheduleListAPIView,
+    TrainerScheduleAPIView,
 )
 from fitness import settings
 from users.views import (
@@ -52,7 +52,7 @@ urlpatterns = [
     path("api/schedule/booked/", BookedScheduleAPIView.as_view()),
     path("api/schedule/booked/cancel/", BookingCancelAPIView.as_view()),
     path("api/schedule/booking/", ScheduleBookingAPIView.as_view()),
-    path("api/trainer/schedule/", TrainerScheduleListAPIView.as_view()),
+    path("api/trainer/schedule/", TrainerScheduleAPIView.as_view()),
     path("api/users/", CreateUserApiView.as_view()),
     path("api/users/me/", UserApiView.as_view()),
     path("api/users/me/photo/", DeleteUserPhotoView.as_view()),

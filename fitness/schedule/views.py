@@ -2,6 +2,7 @@ from datetime import date, timedelta
 
 from core.models import Trainer
 from django.contrib import messages
+from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import (
     BooleanField,
@@ -31,7 +32,7 @@ from .serializers import (
     BookedScheduleSerializer,
     ScheduleBookingSerializer,
     ScheduleSerializer,
-    TrainerScheduleSerializer,
+    TrainerScheduleResponseSerializer,
 )
 
 
@@ -91,23 +92,29 @@ def get_booked_schedule(request: HttpRequest) -> QuerySet[Booking]:
     )
 
 
-def get_trainer_schedule(trainer: Trainer) -> QuerySet[Schedule]:
-    return (
+def get_trainer_schedule(
+    trainer: Trainer, include_bookings: bool = True
+) -> QuerySet[Schedule]:
+    res = (
         Schedule.objects.filter(trainer=trainer)
         .select_related("service")
-        .prefetch_related(
+        .annotate(date=TruncDate("start_time"))
+        .order_by("-date", "start_time__time")
+    )
+
+    if include_bookings:
+        res = res.prefetch_related(
             Prefetch(
                 "bookings",
                 Booking.not_canceled.select_related("client", "client__trainer").all(),
                 to_attr="active_bookings",
             )
         )
-        .annotate(date=TruncDate("start_time"))
-        .order_by("-date", "start_time__time")
-    )
+
+    return res
 
 
-def schedule(request: HttpRequest):
+def schedule_view(request: HttpRequest):
     context = {"title": "Расписание"}
     return render(request, "schedule/schedule.html", context)
 
@@ -125,7 +132,9 @@ def to_book(
         schedule_obj = (
             Schedule.objects.select_related("trainer__user", "service")
             .annotate(
-                not_canceled_bookings_count=Count("bookings", Q(bookings__canceled=False))
+                not_canceled_bookings_count=Count(
+                    "bookings", Q(bookings__canceled=False)
+                )
             )
             .get(pk=schedule_id)
         )
@@ -304,28 +313,31 @@ class BookedScheduleAPIView(ListAPIView):
         return get_booked_schedule(self.request)
 
 
-class TrainerScheduleListAPIView(ListAPIView):
+class TrainerScheduleAPIView(GenericAPIView):
     permission_classes = (IsAuthenticated,)
-    serializer_class = TrainerScheduleSerializer
+    serializer_class = TrainerScheduleResponseSerializer
+    trainer: Trainer | None = None
 
     def get_queryset(self):
         if not hasattr(self.request.user, "trainer"):
             raise PermissionDenied()
 
-        trainer = getattr(self.request.user, "trainer")
-        return get_trainer_schedule(trainer)
+        self.trainer = getattr(self.request.user, "trainer")
+        return get_trainer_schedule(self.trainer, include_bookings=False)
 
-    def get(self, request, *args, **kwargs):
-        queryset = self.filter_queryset(self.get_queryset())
-
-        page = self.paginate_queryset(queryset)
-        if page is not None:
-            serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
-
-        serializer = self.get_serializer(
-            queryset, many=True, context={"request": request}
+    def get(self, request):
+        schedule = self.get_queryset()
+        bookings = Booking.not_canceled.filter(schedule__trainer=self.trainer)
+        clients = (
+            get_user_model()
+            .objects.filter(bookings__in=bookings)
+            .select_related("trainer")
+            .distinct()
         )
+
+        data = {"items": schedule, "clients": clients, "bookings": bookings}
+
+        serializer = self.get_serializer(data, context={"request": request})
         return Response(serializer.data)
 
 
