@@ -11,7 +11,7 @@ User = get_user_model()
 
 @register.inclusion_tag("schedule/schedule-list.html")
 def show_schedule(request: HttpRequest, **kwargs):
-    schedule_objs, days = get_schedule(request, **kwargs)
+    schedule_objs, days = get_schedule(request.user, **kwargs)
 
     grouped = []
 

@@ -6,8 +6,8 @@
     data-trainer-photo="{{ item.trainer.avatar }}"
     data-trainer-url="{% url 'trainer' trainer_slug=item.trainer.slug %}"
     data-schedule-id="{{ item.pk }}"
-    data-available="{% if item.is_available %}true{% else %}false{% endif %}"
-    data-is-booked="{% if not canceled %}true{% else %}false{% endif %}"
+    data-booking-id="{{ booking_id }}"
+    data-can-book="{% if item.is_available and canceled %}true{% else %}false{% endif %}"
     data-can-cancel="{% if not canceled and item.day_before %}true{% else %}false{% endif %}">
 
   <h5 class="mb-0 schedule__name">{{ item.service }}</h5>

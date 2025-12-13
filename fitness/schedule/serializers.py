@@ -8,8 +8,8 @@ from .models import Booking, Schedule
 
 
 class ScheduleSerializer(serializers.ModelSerializer):
-    is_user_booked = serializers.SerializerMethodField()
-    is_available = serializers.SerializerMethodField()
+    booking_id = serializers.SerializerMethodField()
+    can_book = serializers.SerializerMethodField()
     can_cancel = serializers.SerializerMethodField()
 
     class Meta:
@@ -21,26 +21,30 @@ class ScheduleSerializer(serializers.ModelSerializer):
             "start_time",
             "end_time",
             "count_remained_seats",
-            "is_available",
-            "is_user_booked",
+            "booking_id",
+            "can_book",
             "can_cancel",
         )
 
     @staticmethod
-    def get_is_user_booked(obj: Schedule) -> bool:
-        return getattr(obj, "is_user_booked", False)
+    def get_booking_id(obj: Schedule) -> int | None:
+        return getattr(obj, "booking_id", None)
 
-    def get_is_available(self, obj: Schedule) -> bool:
+    def get_can_book(self, obj: Schedule) -> bool:
         request = self.context.get("request")
 
         if request:
-            return obj.is_available and request.user.id != obj.trainer.user.id
+            return (
+                obj.is_available
+                and not getattr(obj, "booking_id", None)
+                and request.user != obj.trainer.user
+            )
 
         return False
 
     @staticmethod
     def get_can_cancel(obj: Schedule) -> bool:
-        return getattr(obj, "is_user_booked", False) and obj.day_before
+        return bool(getattr(obj, "booking_id", None)) and obj.day_before
 
 
 class BookedScheduleSerializer(serializers.Serializer):
@@ -50,8 +54,8 @@ class BookedScheduleSerializer(serializers.Serializer):
     start_time = serializers.SerializerMethodField()
     end_time = serializers.SerializerMethodField()
     count_remained_seats = serializers.SerializerMethodField()
-    is_available = serializers.SerializerMethodField()
-    is_user_booked = serializers.SerializerMethodField()
+    booking_id = serializers.SerializerMethodField()
+    can_book = serializers.SerializerMethodField()
     can_cancel = serializers.SerializerMethodField()
 
     class Meta:
@@ -63,8 +67,8 @@ class BookedScheduleSerializer(serializers.Serializer):
             "start_time",
             "end_time",
             "count_remained_seats",
-            "is_available",
-            "is_user_booked",
+            "booking_id",
+            "can_book",
             "can_cancel",
         )
 
@@ -93,19 +97,20 @@ class BookedScheduleSerializer(serializers.Serializer):
         return obj.schedule.count_remained_seats
 
     @staticmethod
-    def get_is_user_booked(obj: Booking) -> bool:
-        return not obj.canceled
+    def get_booking_id(obj: Booking) -> int | None:
+        booking_id = getattr(obj, "id")
+        return booking_id if not obj.canceled else None
 
     @staticmethod
-    def get_is_available(obj: Booking) -> bool:
-        return obj.schedule.is_available
+    def get_can_book(obj: Booking) -> bool:
+        return obj.schedule.is_available and obj.canceled
 
     @staticmethod
     def get_can_cancel(obj: Booking) -> bool:
         return not obj.canceled and obj.schedule.day_before
 
 
-class ScheduleBookingSerializer(serializers.Serializer):
+class CreateBookingSerializer(serializers.Serializer):
     schedule_id = serializers.IntegerField(allow_null=False)
 
 

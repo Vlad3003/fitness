@@ -32,8 +32,8 @@ $(document).ready(function () {
     const schedule = {
       date: item.data("date"),
       id: item.data("schedule-id"),
-      available: item.data("available"),
-      isBooked: item.data("is-booked"),
+      bookingId: item.data("booking-id"),
+      canBook: item.data("can-book"),
       canCancel: item.data("can-cancel")
     }
 
@@ -60,13 +60,17 @@ $(document).ready(function () {
     const bookingBtn = modal.find("#bookingBtn");
     const cancelBtn = modal.find("#cancelBtn");
 
-    bookingBtn.toggle(schedule.available && !schedule.isBooked);
+    bookingBtn.toggle(schedule.canBook);
     cancelBtn.toggle(schedule.canCancel);
 
     if (schedule.canCancel) {
-      modalForm.attr("action", modalForm.data("cancel-url"));
-    } else if (schedule.available) {
+      modalForm.attr("action", replaceBookingId(modalForm.data("cancel-url"), schedule.bookingId));
+    } else if (schedule.canBook) {
       modalForm.attr("action", modalForm.data("booking-url"));
     }
   });
+
+  function replaceBookingId(urlTemplate, newId) {
+    return urlTemplate.replace(/\/\d+\//, `/${newId}/`)
+  }
 });
