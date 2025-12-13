@@ -15,29 +15,25 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 
+from core.views import ServiceListAPIView, TrainerListAPIView
 from django.conf.urls.static import static
 from django.contrib import admin
-from django.urls import path, include
-from rest_framework_simplejwt.views import (
-    TokenRefreshView,
-    TokenBlacklistView,
+from django.urls import include, path
+from rest_framework_simplejwt.views import TokenBlacklistView, TokenRefreshView
+from schedule.views import (
+    BookingCancelAPIView,
+    BookingsListCreateAPIView,
+    ScheduleListAPIView,
+    TrainerScheduleListAPIView,
+)
+from users.views import (
+    CreateUserAPIView,
+    DeleteUserPhotoView,
+    TokensObtainView,
+    UserAPIView,
 )
 
-from core.views import TrainerListAPIView, ServiceListAPIView
-from schedule.views import (
-    ScheduleAPIView,
-    BookedScheduleAPIView,
-    ScheduleBookingAPIView,
-    BookingCancelAPIView,
-    TrainerScheduleAPIView,
-)
 from fitness import settings
-from users.views import (
-    TokensObtainView,
-    UserApiView,
-    DeleteUserPhotoView,
-    CreateUserApiView,
-)
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -45,16 +41,14 @@ urlpatterns = [
     path("users/", include("users.urls", namespace="users")),
     path("schedule/", include("schedule.urls", namespace="schedule")),
     path("__debug__/", include("debug_toolbar.urls")),
-
     path("api/trainers/", TrainerListAPIView.as_view()),
     path("api/services/", ServiceListAPIView.as_view()),
-    path("api/schedule/", ScheduleAPIView.as_view()),
-    path("api/schedule/booked/", BookedScheduleAPIView.as_view()),
-    path("api/schedule/booked/cancel/", BookingCancelAPIView.as_view()),
-    path("api/schedule/booking/", ScheduleBookingAPIView.as_view()),
-    path("api/trainer/schedule/", TrainerScheduleAPIView.as_view()),
-    path("api/users/", CreateUserApiView.as_view()),
-    path("api/users/me/", UserApiView.as_view()),
+    path("api/schedule/", ScheduleListAPIView.as_view()),
+    path("api/bookings/", BookingsListCreateAPIView.as_view()),
+    path("api/bookings/<int:booking_id>/cancel/", BookingCancelAPIView.as_view()),
+    path("api/schedule/my/", TrainerScheduleListAPIView.as_view()),
+    path("api/users/", CreateUserAPIView.as_view()),
+    path("api/users/me/", UserAPIView.as_view()),
     path("api/users/me/photo/", DeleteUserPhotoView.as_view()),
     path("api/token/", TokensObtainView.as_view(), name="tokens_obtain"),
     path("api/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),

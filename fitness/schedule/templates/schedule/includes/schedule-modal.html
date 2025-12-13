@@ -31,7 +31,7 @@
       <div class="modal-footer p-0 border-top-0">
         <form id="modalForm" action="" method="post" class="w-100"
               data-booking-url="{% url 'schedule:booking' %}"
-              data-cancel-url="{% url 'schedule:cancel' %}">
+              data-cancel-url="{% url 'schedule:cancel' 0 %}">
 
           {% csrf_token %}
           <input type="hidden" name="next" value="{{ request.get_full_path }}"/>
