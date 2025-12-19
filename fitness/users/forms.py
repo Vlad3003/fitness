@@ -2,28 +2,28 @@ from datetime import date
 
 from django import forms
 from django.contrib.auth import get_user_model
-from django.contrib.auth.forms import (
-    AuthenticationForm,
-    UserCreationForm,
-    PasswordResetForm as PswResetForm,
-    SetPasswordForm as SetPswForm,
-    PasswordChangeForm,
-)
+from django.contrib.auth.forms import AuthenticationForm, PasswordChangeForm
+from django.contrib.auth.forms import PasswordResetForm as PswResetForm
+from django.contrib.auth.forms import SetPasswordForm as SetPswForm
+from django.contrib.auth.forms import UserCreationForm
+
+User = get_user_model()
 
 input_class = {"class": "form-control"}
 select_class = {"class": "form-select"}
 
+__invalid_login_error_message = (
+    "Неверное имя пользователя/адрес электронной "
+    "почты или пароль. Проверьте правильность ввода."
+)
+
 error_messages = {
-    "password": {"required": "Укажите пароль - это обязательное поле."},
-    "password_new": {"required": "Укажите новый пароль - это обязательное поле."},
-    "password_old": {"required": "Укажите старый пароль - это обязательное поле."},
-    "password_confirm": {
-        "required": "Поле подтверждения пароля обязательно для заполнения."
+    "required": {"required": "Это поле является обязательным"},
+    "min_length": {
+        "min_length": "Введённый пароль слишком короткий. Он должен содержать как минимум 8 символов"
     },
-    "password_new_confirm": {
-        "required": "Поле подтверждения нового пароля обязательно для заполнения."
-    },
-    "email": {"required": "Укажите адрес электронной почты - это обязательное поле."},
+    "invalid_login": {"invalid_login": __invalid_login_error_message},
+    "no_active_account": {"no_active_account": __invalid_login_error_message},
 }
 
 
@@ -31,23 +31,18 @@ class LoginUserForm(AuthenticationForm):
     username = forms.CharField(
         label="E-mail или имя пользователя",
         widget=forms.TextInput(attrs={**input_class, "placeholder": "Логин"}),
-        error_messages={
-            "required": "Укажите E-mail или имя пользователя - это обязательное поле."
-        },
+        error_messages=error_messages["required"],
     )
     password = forms.CharField(
         label="Пароль",
         widget=forms.PasswordInput(attrs={**input_class, "placeholder": "Пароль"}),
-        error_messages=error_messages["password"],
+        error_messages=error_messages["required"],
     )
-    error_messages = {
-        "invalid_login": "Неверное имя пользователя/адрес электронной "
-        "почты или пароль. Проверьте правильность ввода.",
-    }
+    error_messages = error_messages["invalid_login"]
 
     class Meta:
-        model = get_user_model()
-        fields = ["username", "password"]
+        model = User
+        fields = ("username", "password")
 
     def clean(self):
         res = super().clean()
@@ -65,33 +60,32 @@ class RegisterUserForm(UserCreationForm):
         widget=forms.TextInput(
             attrs={**input_class, "placeholder": "Имя пользователя"}
         ),
-        error_messages={
-            "required": "Укажите имя пользователя - это обязательное поле."
-        },
+        error_messages=error_messages["required"],
     )
     password1 = forms.CharField(
         label="Пароль",
         widget=forms.PasswordInput(attrs={**input_class, "placeholder": "Пароль"}),
-        error_messages=error_messages["password"],
+        error_messages={**error_messages["required"], **error_messages["min_length"]},
+        min_length=8,
     )
     password2 = forms.CharField(
         label="Подтверждение пароля",
         widget=forms.PasswordInput(
             attrs={**input_class, "placeholder": "Подтверждение пароля"}
         ),
-        error_messages=error_messages["password_confirm"],
+        error_messages=error_messages["required"],
     )
 
     class Meta:
-        model = get_user_model()
-        fields = [
+        model = User
+        fields = (
             "username",
             "email",
             "first_name",
             "last_name",
             "password1",
             "password2",
-        ]
+        )
         widgets = {
             "email": forms.EmailInput(
                 attrs={**input_class, "placeholder": "Адрес электронной почты"}
@@ -101,19 +95,16 @@ class RegisterUserForm(UserCreationForm):
                 attrs={**input_class, "placeholder": "Фамилия"}
             ),
         }
+        error_messages = {
+            "email": error_messages["required"],
+        }
 
     def _post_clean(self):
         super()._post_clean()
 
         for field in self:
-            field.field.widget.attrs["class"] += (
-                " is-invalid" if field.errors else " is-valid"
-            )
-
-            if field.field == self.fields["password2"] and field.errors:
-                self.fields["password1"].widget.attrs["class"] = (
-                    input_class["class"] + " is-invalid"
-                )
+            if field.errors:
+                field.field.widget.attrs["class"] += " is-invalid"
 
 
 class PasswordResetForm(PswResetForm):
@@ -122,24 +113,15 @@ class PasswordResetForm(PswResetForm):
         widget=forms.EmailInput(
             attrs={**input_class, "placeholder": "Адрес электронной почты"}
         ),
-        error_messages=error_messages["email"],
+        error_messages=error_messages["required"],
     )
-
-    def clean_email(self):
-        email = self.cleaned_data["email"]
-        if not get_user_model().objects.filter(email=email).exists():
-            self.fields["email"].widget.attrs["class"] += " is-invalid"
-            raise forms.ValidationError(
-                "Пользователь с таким адресом электронной почты не существует."
-            )
-
-        return email
 
     def clean(self):
         res = super().clean()
 
-        if self.errors:
-            self.fields["email"].widget.attrs["class"] += " is-invalid"
+        for field in self:
+            if field.errors:
+                field.field.widget.attrs["class"] += " is-invalid"
 
         return res
 
@@ -150,22 +132,23 @@ class SetPasswordForm(SetPswForm):
         widget=forms.PasswordInput(
             attrs={**input_class, "placeholder": "Новый пароль"}
         ),
-        error_messages=error_messages["password_new"],
+        error_messages={**error_messages["required"], **error_messages["min_length"]},
+        min_length=8,
     )
     new_password2 = forms.CharField(
         label="Подтверждение нового пароля",
         widget=forms.PasswordInput(
             attrs={**input_class, "placeholder": "Подтверждение нового пароля"}
         ),
-        error_messages=error_messages["password_new_confirm"],
+        error_messages=error_messages["required"],
     )
 
     def clean(self):
         res = super().clean()
 
-        if self.errors:
-            self.fields["new_password1"].widget.attrs["class"] += " is-invalid"
-            self.fields["new_password2"].widget.attrs["class"] += " is-invalid"
+        for field in self:
+            if field.errors:
+                field.field.widget.attrs["class"] += " is-invalid"
 
         return res
 
@@ -188,8 +171,8 @@ class UpdateUserForm(forms.ModelForm):
 
     class Meta:
         today = date.today()
-        model = get_user_model()
-        fields = [
+        model = User
+        fields = (
             "photo",
             "username",
             "email",
@@ -199,7 +182,7 @@ class UpdateUserForm(forms.ModelForm):
             "middle_name",
             "birth_date",
             "gender",
-        ]
+        )
         labels = {"photo": "Фотография:", "birth_date": "Дата рождения:"}
         widgets = {
             "photo": forms.FileInput(attrs=input_class),
@@ -207,7 +190,7 @@ class UpdateUserForm(forms.ModelForm):
                 attrs={
                     **input_class,
                     "type": "tel",
-                    "placeholder": "+7 (777) 777 77-77",
+                    "placeholder": "+7 (777) 777-77-77",
                 }
             ),
             "first_name": forms.TextInput(attrs={**input_class, "placeholder": "Имя"}),
@@ -223,8 +206,8 @@ class UpdateUserForm(forms.ModelForm):
             "gender": forms.Select(attrs={**select_class, "placeholder": "Пол"}),
         }
 
-    def _post_clean(self):
-        res = super()._post_clean()
+    def clean(self):
+        res = super().clean()
 
         for field in self:
             if field.errors:
@@ -239,21 +222,22 @@ class UserPasswordChangeForm(PasswordChangeForm):
         widget=forms.PasswordInput(
             attrs={**input_class, "placeholder": "Старый пароль"}
         ),
-        error_messages=error_messages["password_old"],
+        error_messages=error_messages["required"],
     )
     new_password1 = forms.CharField(
         label="Новый пароль",
         widget=forms.PasswordInput(
             attrs={**input_class, "placeholder": "Новый пароль"}
         ),
-        error_messages=error_messages["password_new"],
+        error_messages={**error_messages["required"], **error_messages["min_length"]},
+        min_length=8,
     )
     new_password2 = forms.CharField(
         label="Подтверждение нового пароля",
         widget=forms.PasswordInput(
             attrs={**input_class, "placeholder": "Подтверждение нового пароля"}
         ),
-        error_messages=error_messages["password_new_confirm"],
+        error_messages=error_messages["required"],
     )
 
     def clean(self):
@@ -262,10 +246,5 @@ class UserPasswordChangeForm(PasswordChangeForm):
         for field in self:
             if field.errors:
                 field.field.widget.attrs["class"] += " is-invalid"
-
-            if field.field == self.fields["new_password2"] and field.errors:
-                self.fields["new_password1"].widget.attrs["class"] = (
-                    input_class["class"] + " is-invalid"
-                )
 
         return res

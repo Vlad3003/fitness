@@ -1,6 +1,3 @@
-from datetime import datetime
-
-from django.utils import timezone
 from rest_framework import serializers
 from users.serializers import UserShortSerializer
 
@@ -8,7 +5,7 @@ from .models import Booking, Schedule
 
 
 class ScheduleSerializer(serializers.ModelSerializer):
-    booking_id = serializers.SerializerMethodField()
+    booking_id = serializers.IntegerField(allow_null=True, read_only=True)
     can_book = serializers.SerializerMethodField()
     can_cancel = serializers.SerializerMethodField()
 
@@ -26,21 +23,14 @@ class ScheduleSerializer(serializers.ModelSerializer):
             "can_cancel",
         )
 
-    @staticmethod
-    def get_booking_id(obj: Schedule) -> int | None:
-        return getattr(obj, "booking_id", None)
-
     def get_can_book(self, obj: Schedule) -> bool:
-        request = self.context.get("request")
+        request = self.context["request"]
 
-        if request:
-            return (
-                obj.is_available
-                and not getattr(obj, "booking_id", None)
-                and request.user != obj.trainer.user
-            )
-
-        return False
+        return bool(
+            obj.is_available
+            and not getattr(obj, "booking_id", None)
+            and request.user != obj.trainer.user
+        )
 
     @staticmethod
     def get_can_cancel(obj: Schedule) -> bool:
@@ -48,12 +38,14 @@ class ScheduleSerializer(serializers.ModelSerializer):
 
 
 class BookedScheduleSerializer(serializers.Serializer):
-    id = serializers.SerializerMethodField()
-    service_id = serializers.SerializerMethodField()
-    trainer_id = serializers.SerializerMethodField()
-    start_time = serializers.SerializerMethodField()
-    end_time = serializers.SerializerMethodField()
-    count_remained_seats = serializers.SerializerMethodField()
+    id = serializers.IntegerField(source="schedule_id", read_only=True)
+    service_id = serializers.IntegerField(source="schedule.service_id", read_only=True)
+    trainer_id = serializers.IntegerField(source="schedule.trainer_id", read_only=True)
+    start_time = serializers.DateTimeField(source="schedule.start_time", read_only=True)
+    end_time = serializers.DateTimeField(source="schedule.end_time", read_only=True)
+    count_remained_seats = serializers.IntegerField(
+        source="schedule.count_remained_seats", read_only=True
+    )
     booking_id = serializers.SerializerMethodField()
     can_book = serializers.SerializerMethodField()
     can_cancel = serializers.SerializerMethodField()
@@ -71,30 +63,6 @@ class BookedScheduleSerializer(serializers.Serializer):
             "can_book",
             "can_cancel",
         )
-
-    @staticmethod
-    def get_id(obj: Booking) -> int:
-        return obj.schedule.id
-
-    @staticmethod
-    def get_service_id(obj: Booking) -> int:
-        return obj.schedule.service.id
-
-    @staticmethod
-    def get_trainer_id(obj: Booking) -> int:
-        return obj.schedule.trainer.id
-
-    @staticmethod
-    def get_start_time(obj: Booking) -> datetime:
-        return timezone.localtime(obj.schedule.start_time)
-
-    @staticmethod
-    def get_end_time(obj: Booking) -> datetime:
-        return obj.schedule.end_time
-
-    @staticmethod
-    def get_count_remained_seats(obj: Booking) -> int:
-        return obj.schedule.count_remained_seats
 
     @staticmethod
     def get_booking_id(obj: Booking) -> int | None:

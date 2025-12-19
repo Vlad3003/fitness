@@ -4,18 +4,7 @@ from core.models import Trainer
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models import (
-    BooleanField,
-    Case,
-    Count,
-    Exists,
-    OuterRef,
-    Prefetch,
-    Q,
-    QuerySet,
-    Subquery,
-    When,
-)
+from django.db.models import Count, OuterRef, Prefetch, Q, QuerySet, Subquery
 from django.db.models.fields import IntegerField
 from django.db.models.functions import TruncDate
 from django.http import HttpRequest, HttpResponse
@@ -27,7 +16,6 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.generics import GenericAPIView, ListCreateAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.views import APIView
 
 from .models import Booking, Schedule
 from .serializers import (
@@ -53,19 +41,6 @@ def get_schedule(user: User, **kwargs) -> tuple[QuerySet[Schedule], list[date]]:
         .annotate(
             date=TruncDate("start_time"),
             not_canceled_bookings_count=Count("bookings", Q(bookings__canceled=False)),
-            is_user_booked=Case(
-                When(
-                    Exists(
-                        Booking.not_canceled.filter(
-                            schedule=OuterRef("pk"),
-                            client=user if not user.is_anonymous else 0,
-                        )
-                    ),
-                    then=True,
-                ),
-                default=False,
-                output_field=BooleanField(),
-            ),
             booking_id=Subquery(
                 Booking.not_canceled.filter(
                     schedule=OuterRef("pk"),
@@ -172,7 +147,7 @@ def to_book(
             setattr(schedule_obj, "booking_id", new_reservation.pk)
 
         result["success"] = True
-        result["message"] = f"Вы успешно записались на '{schedule_obj}'."
+        result["message"] = f"Вы успешно записались на '{schedule_obj}'"
 
         count = getattr(schedule_obj, "not_canceled_bookings_count") + 1
         setattr(schedule_obj, "not_canceled_bookings_count", count)
@@ -221,7 +196,7 @@ def cancel(
         reservation.save()
 
         result["success"] = True
-        result["message"] = f"Вы успешно отменили запись на '{reservation.schedule}'."
+        result["message"] = f"Вы успешно отменили запись на '{reservation.schedule}'"
 
         count = len(getattr(reservation.schedule, "not_canceled_bookings")) - 1
         setattr(reservation.schedule, "not_canceled_bookings_count", count)
@@ -282,19 +257,15 @@ def booking_cancel_view(request: HttpRequest, booking_id: int):
     return redirect(redirect_url)
 
 
-class ScheduleListAPIView(APIView):
+class ScheduleListAPIView(GenericAPIView):
     permission_classes = (IsAuthenticated,)
+    serializer_class = ScheduleSerializer
 
-    @staticmethod
-    def get(request):
+    def get(self, request):
         schedule_objs, days = get_schedule(request.user)
+        serializer = self.get_serializer(schedule_objs, many=True)
 
-        result = {
-            "days": days,
-            "items": ScheduleSerializer(
-                schedule_objs, many=True, context={"request": request}
-            ).data,
-        }
+        result = {"days": days, "items": serializer.data}
 
         return Response(result, status=status.HTTP_200_OK)
 
@@ -325,17 +296,17 @@ class BookingsListCreateAPIView(ListCreateAPIView):
         return Response(result, status=status.HTTP_200_OK)
 
 
-class BookingCancelAPIView(APIView):
+class BookingCancelAPIView(GenericAPIView):
     permission_classes = (IsAuthenticated,)
+    serializer_class = ScheduleSerializer
 
-    @staticmethod
-    def post(request, booking_id):
+    def post(self, request, booking_id):
         result = cancel(request.user, booking_id, return_item=True)
 
         if result["item"]:
-            result["item"] = ScheduleSerializer(
-                result["item"], context={"request": request}
-            ).data
+            serializer = self.get_serializer(result["item"])
+
+            result["item"] = serializer.data
 
         return Response(result, status=status.HTTP_200_OK)
 
@@ -352,16 +323,27 @@ class TrainerScheduleListAPIView(GenericAPIView):
         self.trainer = getattr(self.request.user, "trainer")
         return get_trainer_schedule(self.trainer, include_bookings=False)
 
-    def get(self, request):
+    def get(self, _):
         schedule = self.get_queryset()
         bookings = Booking.not_canceled.filter(schedule__trainer=self.trainer)
         clients = (
             User.objects.filter(bookings__in=bookings)
             .select_related("trainer")
             .distinct()
+            .only(
+                "id",
+                "first_name",
+                "last_name",
+                "middle_name",
+                "email",
+                "phone_number",
+                "photo",
+                "username",
+                "trainer__photo",
+            )
         )
 
         data = {"items": schedule, "clients": clients, "bookings": bookings}
 
-        serializer = self.get_serializer(data, context={"request": request})
+        serializer = self.get_serializer(data)
         return Response(serializer.data)

@@ -9,6 +9,9 @@ phone_validator = RegexValidator(
     regex=r"^\+7 \(\d{3}\) \d{3}-\d{2}-\d{2}$",
     message="Телефон должен быть в формате '+7 (777) 777-77-77'",
 )
+_phone_number_unique_failed_error_message = (
+    "Пользователь с таким номером телефона уже существует"
+)
 
 
 class User(AbstractUser):
@@ -16,7 +19,7 @@ class User(AbstractUser):
         _("email address"),
         unique=True,
         error_messages={
-            "unique": "Пользователь с таким адресом электронной почты уже существует."
+            "unique": "Пользователь с таким адресом электронной почты уже существует"
         },
     )
     photo = models.ImageField(
@@ -30,6 +33,7 @@ class User(AbstractUser):
         verbose_name="Номер телефона",
         max_length=18,
         validators=(phone_validator,),
+        error_messages={"unique": _phone_number_unique_failed_error_message},
     )
     gender = models.CharField(
         blank=True,
@@ -51,7 +55,7 @@ class User(AbstractUser):
                 fields=("phone_number",),
                 condition=~models.Q(phone_number=""),
                 name="unique_nonempty_phone_number",
-                violation_error_message="Пользователь с таким номером телефона уже существует.",
+                violation_error_message=_phone_number_unique_failed_error_message,
             ),
         )
 

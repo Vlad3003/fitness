@@ -1,0 +1,55 @@
+.messages {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  top: 100px;
+  z-index: 110;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-radius: 0.375rem;
+  padding: 0 15px;
+  max-width: 1110px;
+  width: 100%;
+}
+
+.message::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background-color: var(--bs-body-bg);
+}
+
+.message {
+  --color-rgb: 0, 255, 0;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  border-radius: inherit;
+  padding: 10px;
+  background-color: rgba(var(--color-rgb), 0.1);
+}
+
+.message.error {
+  --color-rgb: 255, 0, 0;
+}
+
+.message>i {
+  flex-shrink: 0;
+  color: rgb(var(--color-rgb));
+  font-size: 20px;
+}
+
+.message>.btn-close {
+  flex-shrink: 0;
+}
+
+.message>span {
+  flex-grow: 1;
+}

@@ -5,7 +5,7 @@
 {% block main %}
 <div class="container">
   <div class="wrap">
-    {% include 'users/includes/form-messages.html' %}
+    {% include 'users/includes/messages.html' %}
 
     <div class="modal fade" id="imgModal" tabindex="-1" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered modal-lg">
@@ -53,6 +53,14 @@
           <div class="form-floating">
             {{ field }}
             <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+          </div>
+          {% endif %}
+
+          {% if field.errors %}
+          <div class="field-errors">
+            {% for error in field.errors %}
+            <span>{{ error }}</span>
+            {% endfor %}
           </div>
           {% endif %}
         </div>
@@ -103,6 +111,6 @@
 {% block scripts %}
 {{ block.super }}
 <script src="{% static 'users/js/img-change.js' %}"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.inputmask/5.0.8/jquery.inputmask.min.js"></script>
+<script src="{% static 'js/jquery.inputmask.min.js' %}"></script>
 <script src="{% static 'users/js/phone-mask.js' %}"></script>
 {% endblock %}

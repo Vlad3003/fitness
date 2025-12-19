@@ -4,9 +4,9 @@ from .models import Service, Trainer
 
 
 class TrainerSerializer(serializers.ModelSerializer):
-    full_name = serializers.SerializerMethodField()
-    email = serializers.SerializerMethodField()
-    phone_number = serializers.SerializerMethodField()
+    full_name = serializers.CharField(source="__str__", read_only=True)
+    email = serializers.EmailField(source="user.email", read_only=True)
+    phone_number = serializers.CharField(source="user.phone_number", read_only=True)
 
     class Meta:
         model = Trainer
@@ -20,18 +20,6 @@ class TrainerSerializer(serializers.ModelSerializer):
             "experience",
             "photo",
         )
-
-    @staticmethod
-    def get_full_name(obj: Trainer) -> str:
-        return str(obj)
-
-    @staticmethod
-    def get_email(obj: Trainer) -> str:
-        return obj.user.email
-
-    @staticmethod
-    def get_phone_number(obj: Trainer) -> str | None:
-        return obj.user.phone_number
 
 
 class ServiceSerializer(serializers.ModelSerializer):
