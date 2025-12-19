@@ -2,6 +2,7 @@
 {% load static %}
 
 {% block links %}
+<link rel="stylesheet" href="{% static 'users/css/messages.css' %}">
 <link rel="stylesheet" href="{% static 'users/css/style.css' %}">
 <link rel="stylesheet" href="{% static 'core/css/style.css' %}">
 <link rel="stylesheet" href="{% static 'core/css/media.css' %}">
@@ -10,6 +11,8 @@
 {% block main %}
 <section class="hero my-5">
   <div class="container">
+    {% include 'users/includes/messages.html' %}
+
     <div class="py-4 text-center">
       <h1 class="display-5 fw-bold text-body-emphasis mb-5">Добро пожаловать в FitPro</h1>
 
@@ -212,5 +215,6 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="{% static 'users/js/messages.js' %}"></script>
 <script src="{% static 'users/js/accordion.js' %}"></script>
 {% endblock %}

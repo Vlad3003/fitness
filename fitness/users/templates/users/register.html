@@ -8,7 +8,7 @@
 {% block main %}
 <div class="container">
   <div class="wrap">
-    {% include 'users/includes/form-messages.html' %}
+    {% include 'users/includes/messages.html' %}
 
     <form class="form m-auto" method="post">
       {% csrf_token %}
@@ -30,6 +30,14 @@
             <button class="btn-reset password-control" type="button"><i class="bi bi-eye-fill"></i></button>
             {% endif %}
           </div>
+
+          {% if field.errors %}
+          <div class="field-errors">
+            {% for error in field.errors %}
+            <span>{{ error }}</span>
+            {% endfor %}
+          </div>
+          {% endif %}
         </div>
         {% endfor %}
       </div>

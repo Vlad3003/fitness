@@ -4,6 +4,7 @@
 {% block title %}{{ trainer }}{% endblock %}
 
 {% block links %}
+<link rel="stylesheet" href="{% static 'users/css/messages.css' %}">
 <link rel="stylesheet" href="{% static 'schedule/css/style.css' %}">
 <link rel="stylesheet" href="{% static 'core/css/style.css' %}">
 <link rel="stylesheet" href="{% static 'core/css/media.css' %}">
@@ -85,7 +86,7 @@
 <section id="schedule">
   <div class="container">
     <h2 class="text-center mb-4">Расписание</h2>
-    {% include 'schedule/includes/form-messages.html' %}
+    {% include 'users/includes/messages.html' %}
 
     {% show_schedule request trainer_id=trainer.pk %}
   </div>
@@ -94,6 +95,6 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="{% static 'schedule/js/messages.js' %}"></script>
+<script src="{% static 'users/js/messages.js' %}"></script>
 <script src="{% static 'schedule/js/schedule.js' %}"></script>
 {% endblock %}

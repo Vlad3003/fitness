@@ -3,7 +3,7 @@ $(document).ready(function () {
     const file = this.files[0];
 
     if (file && file.type.startsWith("image/")) {
-      $(this).removeClass("is-invalid").addClass("is-valid");
+      $(this).removeClass("is-invalid");
       const reader = new FileReader();
 
       reader.onload = function (e) {
@@ -15,7 +15,7 @@ $(document).ready(function () {
       reader.readAsDataURL(file);
     } else {
       $(this).val("");
-      $(this).removeClass("is-valid").addClass("is-invalid");
+      $(this).addClass("is-invalid");
 
       const error = `
       <div class="message error shadow">
@@ -24,13 +24,13 @@ $(document).ready(function () {
           Загрузите изображение. Файл, который вы загрузили, поврежден или не является изображением.
         </span>
         <button type="button" class="btn-close"></button>
-      </div>`;
+      </div>
+      `;
 
-      $(".form-messages").append(error);
+      $(".messages").append(error);
 
-      $(".btn-close").click(function () {
-        $(this).closest(".message").remove();
-      });
+      closeMessage();
+      startMessageQueue();
     }
   });
 });

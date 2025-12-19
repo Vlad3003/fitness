@@ -88,21 +88,8 @@ input[name="new_password2"].is-invalid {
   background-image: none;
 }
 
-input[name="password"].is-valid,
-input[name="password1"].is-valid,
-input[name="password2"].is-valid,
-input[name="old_password"].is-valid,
-input[name="new_password1"].is-valid,
-input[name="new_password2"].is-valid {
-  background-image: none;
-}
-
 .is-invalid~.password-control {
   color: var(--bs-form-invalid-border-color);
-}
-
-.is-valid~.password-control {
-  color: var(--bs-form-valid-border-color);
 }
 
 .btn-link {
@@ -114,60 +101,14 @@ input[name="new_password2"].is-valid {
   position: relative;
 }
 
-.form-messages {
-  position: fixed;
-  left: 50%;
-  transform: translateX(-50%);
-  top: 100px;
-  z-index: 110;
+.field-container {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  border-radius: 0.375rem;
-  padding: 0 15px;
-  max-width: 1100px;
-  width: 100%;
+  gap: 3px;
 }
 
-.message::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  z-index: -1;
-  border-radius: inherit;
-  background-color: var(--bs-body-bg);
-}
-
-.message {
-  --color-rgb: 0, 255, 0;
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  border-radius: inherit;
-  padding: 10px;
-  background-color: rgba(var(--color-rgb), 0.1);
-}
-
-.message.error {
-  --color-rgb: 255, 0, 0;
-}
-
-.message>i {
-  flex-shrink: 0;
-  color: rgb(var(--color-rgb));
-  font-size: 20px;
-}
-
-.message>.btn-close {
-  flex-shrink: 0;
-}
-
-.message>span {
-  flex-grow: 1;
+.field-errors {
+  color: var(--bs-form-invalid-border-color);
 }
 
 .center {

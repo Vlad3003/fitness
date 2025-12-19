@@ -1,22 +1,23 @@
 from itertools import groupby
 
 from django.contrib import messages
-from django.contrib.auth import get_user_model, logout
+from django.contrib.auth import get_user_model, logout, login
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.views import LoginView, PasswordChangeView
 from django.contrib.auth.views import PasswordResetConfirmView as PswResetConfirmView
 from django.contrib.auth.views import PasswordResetView as PswResetView
 from django.core.exceptions import PermissionDenied
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import redirect
 from django.urls import reverse, reverse_lazy
 from django.views.generic import CreateView, ListView, TemplateView, UpdateView
 from rest_framework import status
-from rest_framework.generics import CreateAPIView, RetrieveUpdateDestroyAPIView
+from rest_framework.generics import RetrieveUpdateDestroyAPIView, GenericAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 from schedule.models import Booking
 from schedule.views import get_booked_schedule, get_trainer_schedule
@@ -31,6 +32,7 @@ from .forms import (
 )
 from .serializers import CreateUserSerializer, TokenSerializer, UserSerializer
 
+User = get_user_model()
 
 class LoginUser(LoginView):
     form_class = LoginUserForm
@@ -42,12 +44,14 @@ class LoginUser(LoginView):
 class RegisterUser(CreateView):
     form_class = RegisterUserForm
     template_name = "users/register.html"
-    success_url = reverse_lazy("users:login")
+    success_url = reverse_lazy("home")
     extra_context = {"title": "Регистрация"}
 
     def form_valid(self, form):
-        messages.success(self.request, "Вы успешно зарегистрировались.")
-        return super().form_valid(form)
+        self.object = form.save()
+        login(self.request, self.object)
+        messages.success(self.request, "Вы успешно зарегистрировались")
+        return HttpResponseRedirect(self.get_success_url())
 
 
 class PasswordResetView(PswResetView):
@@ -88,7 +92,7 @@ class UserPasswordChange(PasswordChangeView):
 
     def form_valid(self, form):
         logout(self.request)
-        messages.success(self.request, "Вы успешно изменили пароль.")
+        messages.success(self.request, "Вы успешно изменили пароль")
         return super().form_valid(form)
 
 
@@ -98,7 +102,7 @@ class ProfileView(LoginRequiredMixin, TemplateView):
 
 
 class ProfileEditView(LoginRequiredMixin, UpdateView):
-    model = get_user_model()
+    model = User
     form_class = UpdateUserForm
     template_name = "users/profile_edit.html"
     user_photo = None
@@ -112,7 +116,7 @@ class ProfileEditView(LoginRequiredMixin, UpdateView):
     def form_valid(self, form):
         if form.has_changed():
             messages.success(
-                self.request, "Ваши данные профиля были успешно обновлены."
+                self.request, "Ваши данные профиля были успешно обновлены"
             )
 
         return super().form_valid(form)
@@ -123,9 +127,9 @@ class ProfileEditView(LoginRequiredMixin, UpdateView):
         return super().form_invalid(form)
 
 
-def delete_user(request: HttpRequest) -> dict[str, bool | str]:
-    request.user.is_active = False
-    request.user.save()
+def delete_user(user: User) -> dict[str, bool | str]:
+    user.is_active = False
+    user.save()
     return {
         "success": True,
         "message": "Ваш аккаунт был успешно удалён. Спасибо, что были с нами!",
@@ -135,20 +139,20 @@ def delete_user(request: HttpRequest) -> dict[str, bool | str]:
 @login_required
 def delete_user_view(request: HttpRequest):
     if request.method == "POST":
-        result = delete_user(request)
+        result = delete_user(request.user)
         logout(request)
         messages.success(request, result["message"])
         return redirect(reverse("users:login"))
     return HttpResponse(status=405)
 
 
-def delete_user_photo(request: HttpRequest) -> dict[str, bool | str]:
+def delete_user_photo(user: User) -> dict[str, bool | str]:
     result: dict[str, bool | str] = {"success": False, "message": ""}
 
-    if request.user.photo:
-        request.user.photo.delete()
-        request.user.save()
-        result["message"] = "Ваша фотография была успешно удалена."
+    if user.photo:
+        user.photo.delete()
+        user.save()
+        result["message"] = "Ваша фотография была успешно удалена"
         result["success"] = True
     else:
         result["message"] = "У вас пока нет фотографии профиля"
@@ -159,7 +163,7 @@ def delete_user_photo(request: HttpRequest) -> dict[str, bool | str]:
 @login_required
 def delete_user_photo_view(request: HttpRequest):
     if request.method == "POST":
-        res = delete_user_photo(request)
+        res = delete_user_photo(request.user)
         message = res["message"]
 
         if res["success"]:
@@ -233,12 +237,28 @@ class UserAPIView(RetrieveUpdateDestroyAPIView):
         return self.request.user
 
     def delete(self, request, *args, **kwargs):
-        delete_user(request)
+        delete_user(request.user)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class CreateUserAPIView(CreateAPIView):
+class CreateUserAPIView(GenericAPIView):
     serializer_class = CreateUserSerializer
+    permission_classes = ()
+
+    def post(self, request):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        user = serializer.save()
+        refresh = RefreshToken.for_user(user)
+
+        return Response({
+            "user": serializer.data,
+            "tokens": {
+                "access": str(refresh.access_token),
+                "refresh": str(refresh)
+            }
+        }, status=status.HTTP_201_CREATED)
 
 
 class DeleteUserPhotoView(APIView):
@@ -246,7 +266,7 @@ class DeleteUserPhotoView(APIView):
 
     @staticmethod
     def delete(request: HttpRequest):
-        result = delete_user_photo(request)
+        result = delete_user_photo(request.user)
         result["user"] = UserSerializer(request.user).data
 
         return Response(result, status=status.HTTP_200_OK)
