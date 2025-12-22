@@ -9,8 +9,8 @@ register = template.Library()
 User = get_user_model()
 
 
-@register.inclusion_tag("schedule/schedule-list.html")
-def show_schedule(request: HttpRequest, **kwargs):
+@register.simple_tag(name="get_schedule")
+def get_schedule_tag(request: HttpRequest, **kwargs):
     schedule_objs, days = get_schedule(request.user, **kwargs)
 
     grouped = []
@@ -21,7 +21,5 @@ def show_schedule(request: HttpRequest, **kwargs):
     context = {
         "schedule": grouped,
         "days": days,
-        "request": request,
-        "user": request.user,
     }
     return context

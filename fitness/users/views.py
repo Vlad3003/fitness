@@ -1,48 +1,45 @@
-from itertools import groupby
-
 from django.contrib import messages
-from django.contrib.auth import get_user_model, logout, login
+from django.contrib.auth import get_user_model, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.contrib.auth.views import LoginView, PasswordChangeView
+from django.contrib.auth.views import LoginView as LognView
+from django.contrib.auth.views import PasswordChangeView as PswChangeView
 from django.contrib.auth.views import PasswordResetConfirmView as PswResetConfirmView
 from django.contrib.auth.views import PasswordResetView as PswResetView
-from django.core.exceptions import PermissionDenied
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import redirect
 from django.urls import reverse, reverse_lazy
-from django.views.generic import CreateView, ListView, TemplateView, UpdateView
+from django.views.generic import CreateView, TemplateView, UpdateView
 from rest_framework import status
-from rest_framework.generics import RetrieveUpdateDestroyAPIView, GenericAPIView
+from rest_framework.generics import GenericAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
-from schedule.models import Booking
-from schedule.views import get_booked_schedule, get_trainer_schedule
 
 from .forms import (
-    LoginUserForm,
+    LoginForm,
+    PasswordChangeForm,
     PasswordResetForm,
-    RegisterUserForm,
     SetPasswordForm,
-    UpdateUserForm,
-    UserPasswordChangeForm,
+    UserCreateForm,
+    UserUpdateForm,
 )
 from .serializers import CreateUserSerializer, TokenSerializer, UserSerializer
 
 User = get_user_model()
 
-class LoginUser(LoginView):
-    form_class = LoginUserForm
+
+class LoginView(LognView):
+    form_class = LoginForm
     template_name = "users/login.html"
     redirect_authenticated_user = True
     extra_context = {"title": "Вход в профиль"}
 
 
-class RegisterUser(CreateView):
-    form_class = RegisterUserForm
+class UserCreateView(CreateView):
+    form_class = UserCreateForm
     template_name = "users/register.html"
     success_url = reverse_lazy("home")
     extra_context = {"title": "Регистрация"}
@@ -84,8 +81,8 @@ class PasswordResetConfirmView(PswResetConfirmView):
         return super().form_valid(form)
 
 
-class UserPasswordChange(PasswordChangeView):
-    form_class = UserPasswordChangeForm
+class PasswordChangeView(PswChangeView):
+    form_class = PasswordChangeForm
     success_url = reverse_lazy("users:login")
     template_name = "users/password_change_form.html"
     extra_context = {"title": "Изменение пароля"}
@@ -96,14 +93,13 @@ class UserPasswordChange(PasswordChangeView):
         return super().form_valid(form)
 
 
-class ProfileView(LoginRequiredMixin, TemplateView):
+class UserDetailView(LoginRequiredMixin, TemplateView):
     template_name = "users/profile.html"
     extra_context = {"title": "Профиль"}
 
 
-class ProfileEditView(LoginRequiredMixin, UpdateView):
-    model = User
-    form_class = UpdateUserForm
+class UserUpdateView(LoginRequiredMixin, UpdateView):
+    form_class = UserUpdateForm
     template_name = "users/profile_edit.html"
     user_photo = None
     success_url = reverse_lazy("users:profile_edit")
@@ -115,9 +111,7 @@ class ProfileEditView(LoginRequiredMixin, UpdateView):
 
     def form_valid(self, form):
         if form.has_changed():
-            messages.success(
-                self.request, "Ваши данные профиля были успешно обновлены"
-            )
+            messages.success(self.request, "Ваши данные профиля были успешно обновлены")
 
         return super().form_valid(form)
 
@@ -137,7 +131,7 @@ def delete_user(user: User) -> dict[str, bool | str]:
 
 
 @login_required
-def delete_user_view(request: HttpRequest):
+def user_delete_view(request: HttpRequest):
     if request.method == "POST":
         result = delete_user(request.user)
         logout(request)
@@ -161,7 +155,7 @@ def delete_user_photo(user: User) -> dict[str, bool | str]:
 
 
 @login_required
-def delete_user_photo_view(request: HttpRequest):
+def user_photo_delete_view(request: HttpRequest):
     if request.method == "POST":
         res = delete_user_photo(request.user)
         message = res["message"]
@@ -173,56 +167,6 @@ def delete_user_photo_view(request: HttpRequest):
 
         return redirect(reverse("users:profile_edit"))
     return HttpResponse(status=405)
-
-
-class ClassesListView(LoginRequiredMixin, ListView):
-    model = Booking
-    template_name = "users/classes.html"
-    extra_context = {"title": "Мои занятия"}
-    paginate_by = 10
-
-    def get_queryset(self):
-        return get_booked_schedule(self.request.user)
-
-    def get_context_data(self, *, object_list=None, **kwargs):
-        context = super().get_context_data(object_list=object_list, **kwargs)
-
-        grouped = []
-
-        for key, group in groupby(
-            context["object_list"], lambda item: getattr(item, "date")
-        ):
-            grouped.append({"date": key, "items": list(group)})
-
-        context["classes"] = grouped
-        return context
-
-
-class TrainerClassesListView(LoginRequiredMixin, ListView):
-    model = Booking
-    context_object_name = "classes"
-    template_name = "users/trainer_classes.html"
-    extra_context = {"title": "Мои тренировки"}
-    paginate_by = 20
-
-    def get_queryset(self):
-        if not hasattr(self.request.user, "trainer"):
-            raise PermissionDenied("У вас нет доступа к этой странице")
-
-        return get_trainer_schedule(self.request.user.trainer)
-
-    def get_context_data(self, *, object_list=None, **kwargs):
-        context = super().get_context_data(object_list=object_list, **kwargs)
-
-        grouped = []
-
-        for key, group in groupby(
-            context["object_list"], lambda item: getattr(item, "date")
-        ):
-            grouped.append({"date": key, "items": list(group)})
-
-        context["classes"] = grouped
-        return context
 
 
 class TokensObtainView(TokenObtainPairView):
@@ -252,16 +196,19 @@ class CreateUserAPIView(GenericAPIView):
         user = serializer.save()
         refresh = RefreshToken.for_user(user)
 
-        return Response({
-            "user": serializer.data,
-            "tokens": {
-                "access": str(refresh.access_token),
-                "refresh": str(refresh)
-            }
-        }, status=status.HTTP_201_CREATED)
+        return Response(
+            {
+                "user": serializer.data,
+                "tokens": {
+                    "access": str(refresh.access_token),
+                    "refresh": str(refresh),
+                },
+            },
+            status=status.HTTP_201_CREATED,
+        )
 
 
-class DeleteUserPhotoView(APIView):
+class DeleteUserPhotoAPIView(APIView):
     permission_classes = (IsAuthenticated,)
 
     @staticmethod

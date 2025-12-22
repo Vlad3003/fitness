@@ -1,9 +1,10 @@
-{% extends 'users/base.html' %}
+{% extends 'base.html' %}
 
 {% load static %}
 
 {% block links %}
-{{ block.super }}
+<link rel="stylesheet" href="{% static 'users/css/style.css' %}">
+<link rel="stylesheet" href="{% static 'core/css/style.css' %}">
 <link rel="stylesheet" href="{% static 'schedule/css/style.css' %}">
 {% endblock %}
 
@@ -11,8 +12,9 @@
 <div class="container">
   <h1 class="title mb-3">{{ title }}</h1>
 
+  {% if schedule %}
   <div class="classes-block">
-    {% for day in classes %}
+    {% for day in schedule %}
     <div class="accordions">
       {% now 'Y' as current_year %}
 
@@ -37,11 +39,12 @@
 
           <span>Записано: {{ el.active_bookings|length }} / {{ el.service.max_participants }}</span>
 
-          {% if el.active_bookings|length %}
+          {% if el.active_bookings %}
           <button class="accordion-btn"><i class="bi bi-chevron-up"></i></button>
           {% endif %}
         </div>
 
+        {% if el.active_bookings %}
         <div class="accordion-body">
           <ul class="list-reset classes-list">
             {% for booking in el.active_bookings %}
@@ -70,13 +73,17 @@
             {% endfor %}
           </ul>
         </div>
+        {% endif %}
       </div>
       {% endfor %}
     </div>
     {% endfor %}
   </div>
+  {% else %}
+  <span class="empty-state-text">У вас пока нет назначенных тренировок</span>
+  {% endif %}
 
-  {% include 'users/includes/pagination.html' %}
+  {% include 'schedule/includes/pagination.html' %}
 </div>
 {% endblock %}
 

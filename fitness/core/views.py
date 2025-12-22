@@ -3,7 +3,7 @@ from django.db.models import Count, Prefetch, Q
 from django.shortcuts import render
 from django.utils import timezone
 from django.views.generic import DetailView, ListView
-from rest_framework import generics
+from rest_framework.generics import ListAPIView
 from rest_framework.permissions import IsAuthenticated
 
 from .models import Service, Trainer
@@ -66,21 +66,21 @@ def home(request):
     return render(request, "core/index.html", context)
 
 
-class TrainerView(DetailView):
+class TrainerDetailView(DetailView):
     queryset = Trainer.objects.select_related("user").prefetch_related("services")
     template_name = "core/trainer.html"
     slug_url_kwarg = "trainer_slug"
     context_object_name = "trainer"
 
 
-class TrainersView(ListView):
+class TrainerListView(ListView):
     queryset = Trainer.objects.select_related("user")
     template_name = "core/trainers.html"
     context_object_name = "trainers"
     extra_context = {"title": "Наша команда"}
 
 
-class ServiceView(DetailView):
+class ServiceDetailView(DetailView):
     queryset = Service.objects.prefetch_related(
         Prefetch("trainers", queryset=Trainer.objects.select_related("user"))
     )
@@ -89,20 +89,20 @@ class ServiceView(DetailView):
     context_object_name = "service"
 
 
-class ServicesView(ListView):
+class ServiceListView(ListView):
     model = Service
     template_name = "core/services.html"
     context_object_name = "services"
     extra_context = {"title": "Занятия"}
 
 
-class TrainerListAPIView(generics.ListAPIView):
+class TrainerListAPIView(ListAPIView):
     queryset = Trainer.objects.select_related("user").order_by("id")
     serializer_class = TrainerSerializer
     permission_classes = (IsAuthenticated,)
 
 
-class ServiceListAPIView(generics.ListAPIView):
+class ServiceListAPIView(ListAPIView):
     queryset = Service.objects.prefetch_related("trainers").order_by("id")
     serializer_class = ServiceSerializer
     permission_classes = (IsAuthenticated,)
