@@ -1,8 +1,10 @@
 from datetime import date, timedelta
+from itertools import groupby
 
 from core.models import Trainer
 from django.contrib import messages
 from django.contrib.auth import get_user_model
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Count, OuterRef, Prefetch, Q, QuerySet, Subquery
 from django.db.models.fields import IntegerField
@@ -11,6 +13,7 @@ from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils.safestring import mark_safe
+from django.views.generic import ListView
 from rest_framework import status
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.generics import GenericAPIView, ListCreateAPIView
@@ -55,7 +58,7 @@ def get_schedule(user: User, **kwargs) -> tuple[QuerySet[Schedule], list[date]]:
     return schedule_objs, days
 
 
-def get_booked_schedule(user: User) -> QuerySet[Booking]:
+def get_bookings(user: User) -> QuerySet[Booking]:
     return (
         Booking.objects.filter(client=user)
         .select_related(
@@ -212,7 +215,7 @@ def schedule_view(request: HttpRequest):
     return render(request, "schedule/schedule.html", context)
 
 
-def booking_view(request: HttpRequest):
+def booking_create_view(request: HttpRequest):
     if request.method != "POST":
         return HttpResponse(status=405)
 
@@ -257,6 +260,54 @@ def booking_cancel_view(request: HttpRequest, booking_id: int):
     return redirect(redirect_url)
 
 
+class BookingListView(LoginRequiredMixin, ListView):
+    template_name = "schedule/bookings.html"
+    extra_context = {"title": "Мои занятия"}
+    paginate_by = 25
+
+    def get_queryset(self):
+        return get_bookings(self.request.user)
+
+    def get_context_data(self, *, object_list=None, **kwargs):
+        context = super().get_context_data(object_list=object_list, **kwargs)
+
+        grouped = []
+
+        for key, group in groupby(
+            context["object_list"], lambda item: getattr(item, "date")
+        ):
+            grouped.append({"date": key, "items": list(group)})
+
+        context["bookings"] = grouped
+        return context
+
+
+class TrainerScheduleListView(LoginRequiredMixin, ListView):
+    template_name = "schedule/trainer_schedule.html"
+    extra_context = {"title": "Мои тренировки"}
+    paginate_by = 25
+
+    def get_queryset(self):
+        if not hasattr(self.request.user, "trainer"):
+            raise PermissionDenied("У вас нет доступа к этой странице")
+
+        trainer = getattr(self.request.user, "trainer")
+        return get_trainer_schedule(trainer)
+
+    def get_context_data(self, *, object_list=None, **kwargs):
+        context = super().get_context_data(object_list=object_list, **kwargs)
+
+        grouped = []
+
+        for key, group in groupby(
+            context["object_list"], lambda item: getattr(item, "date")
+        ):
+            grouped.append({"date": key, "items": list(group)})
+
+        context["schedule"] = grouped
+        return context
+
+
 class ScheduleListAPIView(GenericAPIView):
     permission_classes = (IsAuthenticated,)
     serializer_class = ScheduleSerializer
@@ -270,11 +321,11 @@ class ScheduleListAPIView(GenericAPIView):
         return Response(result, status=status.HTTP_200_OK)
 
 
-class BookingsListCreateAPIView(ListCreateAPIView):
+class BookingListCreateAPIView(ListCreateAPIView):
     permission_classes = (IsAuthenticated,)
 
     def get_queryset(self):
-        return get_booked_schedule(self.request.user)
+        return get_bookings(self.request.user)
 
     def get_serializer_class(self):
         if self.request.method == "POST":

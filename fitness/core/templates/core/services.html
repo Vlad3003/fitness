@@ -18,7 +18,11 @@
 
     <h1 class="mb-4 mb-sm-5 text-center">{{ title }}</h1>
 
+    {% if services %}
     {% include 'core/includes/services-cards.html' %}
+    {% else %}
+    <span class="empty-state-text">Список занятий пуст</span>
+    {% endif %}
   </div>
 </section>
 {% endblock %}

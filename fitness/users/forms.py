@@ -2,7 +2,8 @@ from datetime import date
 
 from django import forms
 from django.contrib.auth import get_user_model
-from django.contrib.auth.forms import AuthenticationForm, PasswordChangeForm
+from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth.forms import PasswordChangeForm as PswChangeForm
 from django.contrib.auth.forms import PasswordResetForm as PswResetForm
 from django.contrib.auth.forms import SetPasswordForm as SetPswForm
 from django.contrib.auth.forms import UserCreationForm
@@ -27,7 +28,7 @@ error_messages = {
 }
 
 
-class LoginUserForm(AuthenticationForm):
+class LoginForm(AuthenticationForm):
     username = forms.CharField(
         label="E-mail или имя пользователя",
         widget=forms.TextInput(attrs={**input_class, "placeholder": "Логин"}),
@@ -54,7 +55,7 @@ class LoginUserForm(AuthenticationForm):
         return res
 
 
-class RegisterUserForm(UserCreationForm):
+class UserCreateForm(UserCreationForm):
     username = forms.CharField(
         label="Имя пользователя",
         widget=forms.TextInput(
@@ -153,7 +154,7 @@ class SetPasswordForm(SetPswForm):
         return res
 
 
-class UpdateUserForm(forms.ModelForm):
+class UserUpdateForm(forms.ModelForm):
     username = forms.CharField(
         disabled=True,
         label="Имя пользователя",
@@ -216,7 +217,7 @@ class UpdateUserForm(forms.ModelForm):
         return res
 
 
-class UserPasswordChangeForm(PasswordChangeForm):
+class PasswordChangeForm(PswChangeForm):
     old_password = forms.CharField(
         label="Старый пароль",
         widget=forms.PasswordInput(

@@ -65,9 +65,13 @@
         </div>
         {% endif %}
 
+        {% get_schedule request trainer_id=trainer.pk as result %}
+
+        {% if result.schedule %}
         <div class="block">
-          <a href="#schedule" class="btn btn-primary btn-lg">Смотреть расписание</a>
+          <a href="#schedule" class="btn btn-primary btn-lg">Записаться</a>
         </div>
+        {% endif %}
       </div>
     </div>
   </div>
@@ -83,14 +87,16 @@
 </section>
 {% endif %}
 
+{% if result.schedule %}
 <section id="schedule">
   <div class="container">
     <h2 class="text-center mb-4">Расписание</h2>
     {% include 'users/includes/messages.html' %}
 
-    {% show_schedule request trainer_id=trainer.pk %}
+    {% include 'schedule/schedule-list.html' with days=result.days schedule=result.schedule %}
   </div>
 </section>
+{% endif %}
 
 {% endblock %}
 

@@ -22,13 +22,13 @@ from django.urls import include, path
 from rest_framework_simplejwt.views import TokenBlacklistView, TokenRefreshView
 from schedule.views import (
     BookingCancelAPIView,
-    BookingsListCreateAPIView,
+    BookingListCreateAPIView,
     ScheduleListAPIView,
     TrainerScheduleListAPIView,
 )
 from users.views import (
     CreateUserAPIView,
-    DeleteUserPhotoView,
+    DeleteUserPhotoAPIView,
     TokensObtainView,
     UserAPIView,
 )
@@ -44,12 +44,12 @@ urlpatterns = [
     path("api/trainers/", TrainerListAPIView.as_view()),
     path("api/services/", ServiceListAPIView.as_view()),
     path("api/schedule/", ScheduleListAPIView.as_view()),
-    path("api/bookings/", BookingsListCreateAPIView.as_view()),
+    path("api/bookings/", BookingListCreateAPIView.as_view()),
     path("api/bookings/<int:booking_id>/cancel/", BookingCancelAPIView.as_view()),
     path("api/schedule/my/", TrainerScheduleListAPIView.as_view()),
     path("api/users/", CreateUserAPIView.as_view()),
     path("api/users/me/", UserAPIView.as_view()),
-    path("api/users/me/photo/", DeleteUserPhotoView.as_view()),
+    path("api/users/me/photo/", DeleteUserPhotoAPIView.as_view()),
     path("api/token/", TokensObtainView.as_view(), name="tokens_obtain"),
     path("api/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     path("api/token/blacklist/", TokenBlacklistView.as_view(), name="token_blacklist"),

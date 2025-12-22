@@ -14,16 +14,21 @@ def show_user_menu(request: HttpRequest):
             "url": reverse("users:profile"),
         },
         {
+            "name": "Редактировать профиль",
+            "icon_class": "bi-pen",
+            "url": reverse("users:profile_edit"),
+        },
+        {
             "name": "Мои занятия",
             "icon_class": "bi-calendar-week",
-            "url": reverse("users:classes"),
+            "url": reverse("schedule:bookings"),
         },
     ]
     menu_for_trainers = (
         {
             "name": "Мои тренировки",
             "icon_class": "bi-calendar-check",
-            "url": reverse("users:trainer_classes"),
+            "url": reverse("schedule:trainer_schedule"),
         },
     )
     menu_for_staff = (

@@ -20,4 +20,8 @@
   .map>iframe {
     height: 250px;
   }
+
+  .empty-state-text {
+    font-size: 16px;
+  }
 }

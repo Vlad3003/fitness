@@ -3,6 +3,7 @@
 
 {% block links %}
 <link rel="stylesheet" href="{% static 'users/css/messages.css' %}">
+<link rel="stylesheet" href="{% static 'core/css/style.css' %}">
 <link rel="stylesheet" href="{% static 'schedule/css/style.css' %}">
 {% endblock %}
 
@@ -20,7 +21,13 @@
 
     {% include 'users/includes/messages.html' %}
 
-    {% show_schedule request %}
+    {% get_schedule request as result %}
+
+    {% if result.schedule %}
+    {% include 'schedule/schedule-list.html' with days=result.days schedule=result.schedule %}
+    {% else %}
+    <span class="empty-state-text">Нет доступных занятий в ближайшее время</span>
+    {% endif %}
   </div>
 </section>
 

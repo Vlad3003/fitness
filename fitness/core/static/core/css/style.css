@@ -104,3 +104,15 @@
   border: none;
   border-radius: inherit;
 }
+
+.empty-state-text {
+  position: absolute;
+  top: 60%;
+  left: 50%;
+  transform: translate(-50%, -60%);
+  max-width: 1110px;
+  width: 100%;
+  padding: 0 15px;
+  text-align: center;
+  font-size: 20px;
+}
