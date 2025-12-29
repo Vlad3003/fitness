@@ -96,6 +96,32 @@
   margin-bottom: 1rem;
 }
 
+.day {
+  position: relative;
+}
+
+.day.has-items::before {
+  content: "";
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background-color: var(--bs-body-bg);
+}
+
+.day.has-items::after {
+  content: "";
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: var(--bs-primary);
+}
+
 .day>.btn {
   --bs-btn-focus-box-shadow: none;
 }
