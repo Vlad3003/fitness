@@ -11,15 +11,17 @@ User = get_user_model()
 
 @register.simple_tag(name="get_schedule")
 def get_schedule_tag(request: HttpRequest, **kwargs):
-    schedule_objs, days = get_schedule(request.user, **kwargs)
+    schedule_objs, schedule_days = get_schedule(request.user, **kwargs)
 
-    grouped = []
+    schedule = []
+    days = {day: False for day in schedule_days}
 
-    for key, group in groupby(schedule_objs, lambda item: getattr(item, "date")):
-        grouped.append({"date": key, "items": list(group)})
+    for day, items in groupby(schedule_objs, lambda item: getattr(item, "date")):
+        schedule.append({"date": day, "items": list(items)})
+        days[day] = True
 
     context = {
-        "schedule": grouped,
-        "days": days,
+        "schedule": schedule,
+        "days": list(days.items()),
     }
     return context
