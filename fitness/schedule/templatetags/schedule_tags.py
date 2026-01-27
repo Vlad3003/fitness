@@ -11,7 +11,7 @@ User = get_user_model()
 
 @register.simple_tag(name="get_schedule")
 def get_schedule_tag(request: HttpRequest, **kwargs):
-    schedule_objs, schedule_days = get_schedule(request.user, **kwargs)
+    schedule_objs, schedule_days = get_schedule(request.user.pk, **kwargs)
 
     schedule = []
     days = {day: False for day in schedule_days}

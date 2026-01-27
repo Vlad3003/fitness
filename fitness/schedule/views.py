@@ -19,8 +19,18 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.generics import GenericAPIView, ListCreateAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from users.models import user_short_fields
 
-from .models import Booking, Schedule
+from .models import (
+    Booking,
+    Schedule,
+    booking_fields,
+    booking_short_fields,
+    client_fields,
+    schedule_detail_fields,
+    schedule_short_fields,
+    trainer_schedule_fields,
+)
 from .serializers import (
     BookedScheduleSerializer,
     CreateBookingSerializer,
@@ -31,7 +41,9 @@ from .serializers import (
 User = get_user_model()
 
 
-def get_schedule(user: User, **kwargs) -> tuple[QuerySet[Schedule], list[date]]:
+def get_schedule(
+    user_id: int | None, **kwargs
+) -> tuple[QuerySet[Schedule], list[date]]:
     today = date.today()
     end_date = today + timedelta(days=6)
     schedule_date_range = (today, end_date)
@@ -47,20 +59,21 @@ def get_schedule(user: User, **kwargs) -> tuple[QuerySet[Schedule], list[date]]:
             booking_id=Subquery(
                 Booking.not_canceled.filter(
                     schedule=OuterRef("pk"),
-                    client=user if not user.is_anonymous else 0,
+                    client_id=user_id,
                 ).values("id")[:1],
                 output_field=IntegerField(),
             ),
         )
+        .only(*schedule_detail_fields)
         .order_by("start_time")
     )
 
     return schedule_objs, days
 
 
-def get_bookings(user: User) -> QuerySet[Booking]:
+def get_bookings(user_id: int) -> QuerySet[Booking]:
     return (
-        Booking.objects.filter(client=user)
+        Booking.objects.filter(client_id=user_id)
         .select_related(
             "schedule",
             "schedule__service",
@@ -70,22 +83,24 @@ def get_bookings(user: User) -> QuerySet[Booking]:
         .prefetch_related(
             Prefetch(
                 "schedule__bookings",
-                queryset=Booking.not_canceled.all(),
+                queryset=Booking.not_canceled.only("schedule_id"),
                 to_attr="not_canceled_bookings",
             )
         )
         .annotate(date=TruncDate("schedule__start_time"))
+        .only(*booking_fields)
         .order_by("-date", "schedule__start_time__time")
     )
 
 
 def get_trainer_schedule(
-    trainer: Trainer, include_bookings: bool = True
+    trainer_id: int, include_bookings: bool = True
 ) -> QuerySet[Schedule]:
     res = (
-        Schedule.objects.filter(trainer=trainer)
+        Schedule.objects.filter(trainer_id=trainer_id)
         .select_related("service")
         .annotate(date=TruncDate("start_time"))
+        .only(*trainer_schedule_fields)
         .order_by("-date", "start_time__time")
     )
 
@@ -93,7 +108,8 @@ def get_trainer_schedule(
         res = res.prefetch_related(
             Prefetch(
                 "bookings",
-                Booking.not_canceled.select_related("client", "client__trainer").all(),
+                Booking.not_canceled.select_related("client", "client__trainer")
+                .only(*client_fields),
                 to_attr="active_bookings",
             )
         )
@@ -102,7 +118,7 @@ def get_trainer_schedule(
 
 
 def to_book(
-    user: User, schedule_id: int | None, return_item: bool = False
+    user_id: int, schedule_id: int | None, return_item: bool = False
 ) -> dict[str, str | bool | None | Schedule]:
     result: dict[str, bool | str | None | Schedule] = {
         "success": False,
@@ -118,6 +134,7 @@ def to_book(
                     "bookings", Q(bookings__canceled=False)
                 )
             )
+            .only(*schedule_short_fields)
             .get(pk=schedule_id)
         )
 
@@ -125,13 +142,15 @@ def to_book(
         result["message"] = "Занятие не найдено!"
         return result
 
-    reservation = Booking.objects.filter(schedule=schedule_obj, client=user).first()
+    reservation = Booking.objects.filter(
+        schedule=schedule_obj, client_id=user_id
+    ).first()
 
     if reservation and not reservation.canceled:
         result["message"] = f"Вы уже записаны на '{schedule_obj}'!"
         setattr(schedule_obj, "booking_id", reservation.pk)
 
-    elif schedule_obj.trainer.user == user:
+    elif schedule_obj.trainer.user_id == user_id:
         result["message"] = f"Вы не можете записаться на '{schedule_obj}'"
 
     elif not schedule_obj.count_remained_seats:
@@ -146,7 +165,9 @@ def to_book(
             reservation.save()
             setattr(schedule_obj, "booking_id", reservation.pk)
         else:
-            new_reservation = Booking.objects.create(schedule=schedule_obj, client=user)
+            new_reservation = Booking.objects.create(
+                schedule_id=schedule_obj.pk, client_id=user_id
+            )
             setattr(schedule_obj, "booking_id", new_reservation.pk)
 
         result["success"] = True
@@ -162,7 +183,7 @@ def to_book(
 
 
 def cancel(
-    user: User, booking_id: int, return_item: bool = False
+    user_id: int, booking_id: int, return_item: bool = False
 ) -> dict[str, bool | str | None | Schedule]:
     result: dict[str, bool | str | None | Schedule] = {
         "success": False,
@@ -172,15 +193,16 @@ def cancel(
 
     try:
         reservation = (
-            Booking.objects.filter(id=booking_id, client=user)
-            .select_related("schedule", "schedule__service", "schedule__trainer__user")
+            Booking.objects.filter(id=booking_id, client_id=user_id)
+            .select_related("schedule", "schedule__service", "schedule__trainer")
             .prefetch_related(
                 Prefetch(
                     "schedule__bookings",
-                    queryset=Booking.not_canceled.all(),
+                    queryset=Booking.not_canceled.only("schedule_id"),
                     to_attr="not_canceled_bookings",
                 )
             )
+            .only(*booking_short_fields)
             .get()
         )
 
@@ -228,7 +250,7 @@ def booking_create_view(request: HttpRequest):
         )
     else:
         schedule_id = request.POST.get("schedule_id")
-        result = to_book(request.user, schedule_id)
+        result = to_book(request.user.pk, schedule_id)
 
         if result["success"]:
             messages.success(request, result["message"])
@@ -248,7 +270,7 @@ def booking_cancel_view(request: HttpRequest, booking_id: int):
         messages.error(request, f"Не удалось отменить занятие!")
 
     else:
-        result = cancel(request.user, booking_id)
+        result = cancel(request.user.pk, booking_id)
 
         if result["success"]:
             messages.success(request, result["message"])
@@ -266,7 +288,7 @@ class BookingListView(LoginRequiredMixin, ListView):
     paginate_by = 25
 
     def get_queryset(self):
-        return get_bookings(self.request.user)
+        return get_bookings(self.request.user.pk)
 
     def get_context_data(self, *, object_list=None, **kwargs):
         context = super().get_context_data(object_list=object_list, **kwargs)
@@ -292,7 +314,7 @@ class TrainerScheduleListView(LoginRequiredMixin, ListView):
             raise PermissionDenied("У вас нет доступа к этой странице")
 
         trainer = getattr(self.request.user, "trainer")
-        return get_trainer_schedule(trainer)
+        return get_trainer_schedule(trainer.pk)
 
     def get_context_data(self, *, object_list=None, **kwargs):
         context = super().get_context_data(object_list=object_list, **kwargs)
@@ -313,7 +335,7 @@ class ScheduleListAPIView(GenericAPIView):
     serializer_class = ScheduleSerializer
 
     def get(self, request):
-        schedule_objs, days = get_schedule(request.user)
+        schedule_objs, days = get_schedule(request.user.pk)
         serializer = self.get_serializer(schedule_objs, many=True)
 
         result = {"days": days, "items": serializer.data}
@@ -325,7 +347,7 @@ class BookingListCreateAPIView(ListCreateAPIView):
     permission_classes = (IsAuthenticated,)
 
     def get_queryset(self):
-        return get_bookings(self.request.user)
+        return get_bookings(self.request.user.pk)
 
     def get_serializer_class(self):
         if self.request.method == "POST":
@@ -337,7 +359,7 @@ class BookingListCreateAPIView(ListCreateAPIView):
         serializer.is_valid(raise_exception=True)
 
         schedule_id = serializer.validated_data["schedule_id"]
-        result = to_book(request.user, schedule_id, return_item=True)
+        result = to_book(request.user.pk, schedule_id, return_item=True)
 
         if result["item"]:
             result["item"] = ScheduleSerializer(
@@ -352,7 +374,7 @@ class BookingCancelAPIView(GenericAPIView):
     serializer_class = ScheduleSerializer
 
     def post(self, request, booking_id):
-        result = cancel(request.user, booking_id, return_item=True)
+        result = cancel(request.user.pk, booking_id, return_item=True)
 
         if result["item"]:
             serializer = self.get_serializer(result["item"])
@@ -372,26 +394,16 @@ class TrainerScheduleListAPIView(GenericAPIView):
             raise PermissionDenied()
 
         self.trainer = getattr(self.request.user, "trainer")
-        return get_trainer_schedule(self.trainer, include_bookings=False)
+        return get_trainer_schedule(self.trainer.pk, include_bookings=False)
 
     def get(self, _):
         schedule = self.get_queryset()
-        bookings = Booking.not_canceled.filter(schedule__trainer=self.trainer)
+        bookings = Booking.not_canceled.filter(schedule__trainer_id=self.trainer.pk)
         clients = (
             User.objects.filter(bookings__in=bookings)
             .select_related("trainer")
             .distinct()
-            .only(
-                "id",
-                "first_name",
-                "last_name",
-                "middle_name",
-                "email",
-                "phone_number",
-                "photo",
-                "username",
-                "trainer__photo",
-            )
+            .only(*user_short_fields)
         )
 
         data = {"items": schedule, "clients": clients, "bookings": bookings}

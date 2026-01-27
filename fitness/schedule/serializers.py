@@ -22,6 +22,7 @@ class ScheduleSerializer(serializers.ModelSerializer):
             "can_book",
             "can_cancel",
         )
+        read_only_fields = ("start_time",)
 
     def get_can_book(self, obj: Schedule) -> bool:
         request = self.context["request"]
@@ -29,7 +30,7 @@ class ScheduleSerializer(serializers.ModelSerializer):
         return bool(
             obj.is_available
             and not getattr(obj, "booking_id", None)
-            and request.user != obj.trainer.user
+            and request.user.pk != obj.trainer.user_id
         )
 
     @staticmethod
