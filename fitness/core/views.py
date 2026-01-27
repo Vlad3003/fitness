@@ -6,7 +6,14 @@ from django.views.generic import DetailView, ListView
 from rest_framework.generics import ListAPIView
 from rest_framework.permissions import IsAuthenticated
 
-from .models import Service, Trainer
+from .models import (
+    Service,
+    Trainer,
+    service_detail_fields,
+    service_short_fields,
+    trainer_detail_fields,
+    trainer_short_fields,
+)
 from .serializers import ServiceSerializer, TrainerSerializer
 
 
@@ -31,6 +38,7 @@ def home(request):
         )
         .filter(count_distinct_clients__gt=0, count_clients__gt=0)
         .select_related("user")
+        .only("slug", *trainer_short_fields)
         .order_by(
             "-count_distinct_clients",
             "-count_clients",
@@ -55,6 +63,7 @@ def home(request):
             ),
         )
         .filter(count_distinct_clients__gt=0, count_clients__gt=0)
+        .only("slug", *service_short_fields)
         .order_by("-count_distinct_clients", "-count_clients", "name")
     )[:3]
 
@@ -67,14 +76,25 @@ def home(request):
 
 
 class TrainerDetailView(DetailView):
-    queryset = Trainer.objects.select_related("user").prefetch_related("services")
+    queryset = (
+        Trainer.objects.select_related("user")
+        .prefetch_related(
+            Prefetch(
+                "services",
+                queryset=Service.objects.only("slug", *service_short_fields)
+            )
+        )
+        .only(*trainer_detail_fields)
+    )
     template_name = "core/trainer.html"
     slug_url_kwarg = "trainer_slug"
     context_object_name = "trainer"
 
 
 class TrainerListView(ListView):
-    queryset = Trainer.objects.select_related("user")
+    queryset = Trainer.objects.select_related("user").only(
+        "slug", *trainer_short_fields
+    )
     template_name = "core/trainers.html"
     context_object_name = "trainers"
     extra_context = {"title": "Наша команда"}
@@ -82,27 +102,38 @@ class TrainerListView(ListView):
 
 class ServiceDetailView(DetailView):
     queryset = Service.objects.prefetch_related(
-        Prefetch("trainers", queryset=Trainer.objects.select_related("user"))
-    )
+        Prefetch(
+            "trainers",
+            queryset=Trainer.objects.select_related("user").only(
+                "slug", *trainer_short_fields
+            ),
+        )
+    ).only(*service_detail_fields)
     template_name = "core/service.html"
     slug_url_kwarg = "service_slug"
     context_object_name = "service"
 
 
 class ServiceListView(ListView):
-    model = Service
+    queryset = Service.objects.only("slug", *service_short_fields)
     template_name = "core/services.html"
     context_object_name = "services"
     extra_context = {"title": "Занятия"}
 
 
 class TrainerListAPIView(ListAPIView):
-    queryset = Trainer.objects.select_related("user").order_by("id")
+    queryset = (
+        Trainer.objects.select_related("user")
+        .only(*trainer_detail_fields)
+        .order_by("id")
+    )
     serializer_class = TrainerSerializer
     permission_classes = (IsAuthenticated,)
 
 
 class ServiceListAPIView(ListAPIView):
-    queryset = Service.objects.prefetch_related("trainers").order_by("id")
+    queryset = Service.objects.prefetch_related(
+        Prefetch("trainers", queryset=Trainer.objects.only("id"))
+    ).order_by("id")
     serializer_class = ServiceSerializer
     permission_classes = (IsAuthenticated,)

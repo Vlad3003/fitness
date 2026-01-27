@@ -13,6 +13,16 @@ _phone_number_unique_failed_error_message = (
     "Пользователь с таким номером телефона уже существует"
 )
 
+user_short_fields = (
+    "first_name",
+    "last_name",
+    "middle_name",
+    "email",
+    "phone_number",
+    "photo",
+    "username",
+    "trainer__photo",
+)
 
 class User(AbstractUser):
     email = models.EmailField(

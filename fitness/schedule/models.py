@@ -8,6 +8,74 @@ from django.utils import timezone
 
 User = get_user_model()
 
+schedule_detail_fields = (
+    "service__slug",
+    "service__name",
+    "service__photo",
+    "service__color",
+    "service__max_participants",
+    "service__duration",
+    "trainer__slug",
+    "trainer__photo",
+    "trainer__user__first_name",
+    "trainer__user__last_name",
+    "trainer__user__middle_name",
+    "start_time",
+)
+
+schedule_short_fields = (
+    "service__name",
+    "service__max_participants",
+    "service__duration",
+    "start_time",
+    "trainer_id",
+    "trainer__user__id",
+)
+
+trainer_schedule_fields = (
+    "service__name",
+    "service__color",
+    "service__max_participants",
+    "service__duration",
+    "start_time",
+)
+
+booking_fields = (
+    "schedule__service__slug",
+    "schedule__service__name",
+    "schedule__service__photo",
+    "schedule__service__color",
+    "schedule__service__max_participants",
+    "schedule__service__duration",
+    "schedule__trainer__slug",
+    "schedule__trainer__photo",
+    "schedule__trainer__user__first_name",
+    "schedule__trainer__user__last_name",
+    "schedule__trainer__user__middle_name",
+    "schedule__start_time",
+    "canceled",
+)
+
+booking_short_fields = (
+    "schedule__service__name",
+    "schedule__service__max_participants",
+    "schedule__service__duration",
+    "schedule__start_time",
+    "schedule__trainer__user_id",
+    "canceled",
+)
+
+client_fields = (
+    "client__first_name",
+    "client__last_name",
+    "client__middle_name",
+    "client__email",
+    "client__phone_number",
+    "client__photo",
+    "client__trainer__photo",
+    "schedule_id",
+    "booked_at",
+)
 
 class NotCanceledManager(models.Manager):
     def get_queryset(self):

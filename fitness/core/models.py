@@ -8,6 +8,34 @@ from fitness.settings import DEFAULT_SERVICE_IMAGE, DEFAULT_TRAINER_IMAGE
 
 User = get_user_model()
 
+trainer_short_fields = (
+    "photo",
+    "user__first_name",
+    "user__last_name",
+    "user__middle_name",
+)
+
+trainer_detail_fields = (
+    "specialization",
+    "achievements",
+    "experience_since",
+    "photo",
+    "user__first_name",
+    "user__last_name",
+    "user__middle_name",
+    "user__email",
+    "user__phone_number",
+)
+
+service_short_fields = ("name", "photo")
+
+service_detail_fields = (
+    "name",
+    "description",
+    "duration",
+    "photo",
+    "max_participants",
+)
 
 class Trainer(models.Model):
     user = models.OneToOneField(
