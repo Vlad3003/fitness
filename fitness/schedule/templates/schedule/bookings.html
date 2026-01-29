@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% load static %}
+{% load static date_extras %}
 
 {% block links %}
 <link rel="stylesheet" href="{% static 'users/css/messages.css' %}">
@@ -21,9 +21,7 @@
   <div class="classes-block">
     {% for day in bookings %}
     <div>
-      {% now 'Y' as current_year %}
-
-      <span class="classes-date">{% if day.date|date:'Y' == current_year %}{{ day.date|date:'j E, l'|lower }}{% else %}{{ day.date|date:'j E Y' }}{% endif %}</span>
+      <span class="classes-date">{{ day.date|to_day }}</span>
 
       <ul class="list-reset schedule__list schedule__list_active">
         {% for el in day.items %}

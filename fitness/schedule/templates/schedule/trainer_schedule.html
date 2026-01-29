@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% load static %}
+{% load static date_extras %}
 
 {% block links %}
 <link rel="stylesheet" href="{% static 'users/css/style.css' %}">
@@ -14,11 +14,11 @@
 
   {% if schedule %}
   <div class="classes-block">
+    {% now 'Y' as current_year %}
+
     {% for day in schedule %}
     <div class="accordions">
-      {% now 'Y' as current_year %}
-
-      <span>{% if day.date|date:'Y' == current_year %}{{ day.date|date:'j E, l'|lower }}{% else %}{{ day.date|date:'j E Y' }}{% endif %}</span>
+      <span>{{ day.date|to_day }}</span>
 
       {% for el in day.items %}
       <div class="accordion closed">

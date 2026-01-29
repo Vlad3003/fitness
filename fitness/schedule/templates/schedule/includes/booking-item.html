@@ -1,7 +1,9 @@
+{% load date_extras %}
+
 <li class="schedule__item"
     style="--border-color: {{ item.service.color }};"
     data-service-url="{% url 'service' service_slug=item.service.slug %}"
-    data-date="{{ item.start_time|date:'j E, l'|lower }}"
+    data-date="{{ item.start_time|to_day }}"
     data-service-photo="{{ item.service.avatar }}"
     data-trainer-photo="{{ item.trainer.avatar }}"
     data-trainer-url="{% url 'trainer' trainer_slug=item.trainer.slug %}"
