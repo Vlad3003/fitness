@@ -20,6 +20,7 @@ class TokenSerializer(TokenObtainPairSerializer):
 
 class _UserBaseSerializer(serializers.ModelSerializer):
     trainer_id = serializers.SerializerMethodField()
+    date_joined_ms = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -35,12 +36,12 @@ class _UserBaseSerializer(serializers.ModelSerializer):
             "phone_number",
             "gender",
             "trainer_id",
-            "date_joined",
+            "date_joined_ms",
             "is_staff",
         )
         read_only_fields = (
             "id",
-            "date_joined",
+            "date_joined_ms",
             "is_staff",
         )
 
@@ -49,6 +50,10 @@ class _UserBaseSerializer(serializers.ModelSerializer):
         if hasattr(obj, "trainer"):
             return obj.trainer.id
         return None
+
+    @staticmethod
+    def get_date_joined_ms(obj: User) -> int:
+        return int(obj.date_joined.timestamp()) * 1000
 
 
 class CreateUserSerializer(_UserBaseSerializer):
