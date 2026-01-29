@@ -1,12 +1,12 @@
 from datetime import date, datetime
 
+from dateutil.relativedelta import relativedelta
 from django import template
 from django.utils import timezone
-
-from dateutil.relativedelta import relativedelta
 from django.utils.formats import date_format
 
 register = template.Library()
+
 
 @register.filter
 def to_day(day: date | datetime):
