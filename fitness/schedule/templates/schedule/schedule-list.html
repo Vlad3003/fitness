@@ -1,32 +1,34 @@
 {% include 'schedule/includes/schedule-modal.html' %}
 
-<div class="btn-group days" role="group">
-  {% for item in days %}
+<div class="schedule">
+  <div class="btn-group days sticky-el" role="group">
+    {% for item in days %}
 
-  {% with day=item.0 has_items=item.1 %}
-  <div class="day{% if has_items %} has-items{% endif %}">
-    <input type="radio" class="btn-check" name="day" id="day{{ forloop.counter }}" autocomplete="off" {% if forloop.first %}checked{% endif %} value="{{ day|date:'c' }}">
+    {% with day=item.0 has_items=item.1 %}
+    <div class="day{% if has_items %} has-items{% endif %}">
+      <input type="radio" class="btn-check" name="day" id="day{{ forloop.counter }}" autocomplete="off" {% if forloop.first %}checked{% endif %} value="{{ day|date:'c' }}">
 
-    <label class="btn btn-outline-primary" for="day{{ forloop.counter }}">
-      <strong>{{ day|date:'D' }}</strong>
-      <br>
-      <span>{{ day|date:'j' }}</span>
-    </label>
+      <label class="btn btn-outline-primary" for="day{{ forloop.counter }}">
+        <strong>{{ day|date:'D' }}</strong>
+        <br>
+        <span>{{ day|date:'j' }}</span>
+      </label>
+    </div>
+    {% endwith %}
+
+    {% endfor %}
   </div>
-  {% endwith %}
 
-  {% endfor %}
-</div>
-
-{% for day in schedule %}
-<ul class="list-reset schedule__list{% if forloop.first and day.date == days.0.0 %} schedule__list_active{% endif %}"
+  {% for day in schedule %}
+  <ul class="list-reset schedule__list{% if forloop.first and day.date == days.0.0 %} schedule__list_active{% endif %}"
     data-date="{{ day.date|date:'c' }}">
-  {% for item in day.items %}
-  {% include 'schedule/includes/schedule-item.html' %}
+    {% for item in day.items %}
+    {% include 'schedule/includes/schedule-item.html' %}
+    {% endfor %}
+  </ul>
   {% endfor %}
-</ul>
-{% endfor %}
 
-<div id="schedule_empty" {% if days.0.0 != schedule.0.date %}class="active" {% endif %}>
-  <span>В выбранный день занятий нет</span>
+  <div id="schedule_empty" {% if days.0.0 != schedule.0.date %}class="active" {% endif %}>
+    <span>В выбранный день занятий нет</span>
+  </div>
 </div>

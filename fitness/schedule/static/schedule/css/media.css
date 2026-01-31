@@ -2,4 +2,12 @@
   #modal-trainer-img {
     width: 80px;
   }
+
+  .classes-date {
+    line-height: 26px;
+  }
+
+  .sticky-el {
+    top: 92px;
+  }
 }

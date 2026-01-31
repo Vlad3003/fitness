@@ -23,7 +23,7 @@
   border-color: var(--border-color);
   border-radius: 0.375rem;
   background-color: var(--bs-tertiary-bg);
-  box-shadow: var(--bs-box-shadow);
+  box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
   transition: background-color 0.3s ease-in-out;
 }
 
@@ -34,7 +34,7 @@
   justify-content: center;
   border-radius: 0.375rem;
   background-color: var(--bs-tertiary-bg);
-  box-shadow: var(--bs-box-shadow);
+  box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
 }
 
 #schedule_empty.active {
@@ -88,12 +88,24 @@
   width: 100px;
 }
 
+.schedule {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
 .days {
-  width: 100%;
-  gap: 5px;
-  flex-wrap: wrap;
-  justify-content: center;
-  margin-bottom: 1rem;
+  align-self: center;
+  width: fit-content;
+  max-width: calc(100% + 30px);
+  margin: 0 -15px;
+  padding: 10px 10px;
+  border-radius: 16px;
+  gap: 10px;
+  overflow-y: auto;
+  scrollbar-width: none;
+  background-color: rgba(var(--bs-body-bg-rgb), 0.85);
+  background-color: rgba(var(--bs-body-bg-rgb), 0.85);
 }
 
 .day {
@@ -128,14 +140,20 @@
 
 /* bookings */
 
-.classes-block {
+.classes {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 15px;
 }
 
-.classes-block:not(:last-child) {
+.classes:not(:last-child) {
   margin-bottom: 40px;
+}
+
+.classes-day {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
 }
 
 .pagination {
@@ -143,23 +161,42 @@
 }
 
 .classes-date {
-  display: block;
-  margin-bottom: 20px;
+  align-self: center;
+  padding: 0 8px;
+  border-radius: 2rem;
+  background-color: rgba(var(--bs-body-bg-rgb), 0.85);
+  line-height: 30px;
+}
+
+.sticky-el {
+  position: sticky;
+  z-index: 50;
+  top: 97px;
 }
 
 .classes-list {
   display: flex;
   flex-direction: column;
+  gap: 20px;
+}
+
+.client-list {
+  display: flex;
+  flex-direction: column;
   gap: 10px;
 }
 
-.classes-item {
+.client-item {
   padding: 10px 20px;
   border-radius: 0.5rem;
   background-color: var(--bs-secondary-bg);
   box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
   display: flex;
   flex-direction: column;
+}
+
+.client-name {
+  line-height: 18px;
 }
 
 .border-l {

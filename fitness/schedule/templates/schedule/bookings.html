@@ -18,12 +18,12 @@
   {% include 'schedule/includes/schedule-modal.html' %}
 
   {% if bookings %}
-  <div class="classes-block">
+  <div class="classes">
     {% for day in bookings %}
-    <div>
-      <span class="classes-date">{{ day.date|to_day }}</span>
+    <div class="classes-day">
+      <span class="classes-date sticky-el">{{ day.date|to_day }}</span>
 
-      <ul class="list-reset schedule__list schedule__list_active">
+      <ul class="list-reset classes-list">
         {% for el in day.items %}
         {% include 'schedule/includes/booking-item.html' with item=el.schedule canceled=el.canceled booking_id=el.id %}
         {% endfor %}
@@ -42,4 +42,5 @@
 {% block scripts %}
 <script src="{% static 'users/js/messages.js' %}"></script>
 <script src="{% static 'schedule/js/schedule.js' %}"></script>
+<script src="{% static 'schedule/js/sticky.js' %}"></script>
 {% endblock %}
