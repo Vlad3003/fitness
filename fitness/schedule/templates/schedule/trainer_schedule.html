@@ -6,76 +6,83 @@
 <link rel="stylesheet" href="{% static 'users/css/style.css' %}">
 <link rel="stylesheet" href="{% static 'core/css/style.css' %}">
 <link rel="stylesheet" href="{% static 'schedule/css/style.css' %}">
+<link rel="stylesheet" href="{% static 'schedule/css/media.css' %}">
 {% endblock %}
 
 {% block main %}
 <div class="container">
-  <h1 class="title mb-3">{{ title }}</h1>
+  <h1 class="mb-4 mb-sm-5 text-center">{{ title }}</h1>
 
   {% if schedule %}
-  <div class="classes-block">
+  <div class="classes">
     {% now 'Y' as current_year %}
 
     {% for day in schedule %}
-    <div class="accordions">
-      <span>{{ day.date|to_day }}</span>
+    <div class="classes-day">
+      <span class="classes-date sticky-el">{{ day.date|to_day }}</span>
 
-      {% for el in day.items %}
-      <div class="accordion closed">
-        <div class="accordion-header border-l" style="--border-color: {{ el.service.color }};">
-          <h5 class="mb-0">{{ el.service }}</h5>
+      <div class="classes-list">
+        {% for el in day.items %}
+        <div class="accordion closed">
+          <div class="accordion-header border-l" style="--border-color: {{ el.service.color }};">
+            <h5 class="mb-0">{{ el.service }}</h5>
 
-          <div class="text-block">
-            <span class="schedule-time-range">
-              <time datetime="{{ el.start_time|date:'c' }}">{{ el.start_time|date:'H:i' }}</time>
-              <span> - </span>
-              {% with end_time=el.start_time|add:el.service.duration %}
-              <time datetime="{{ end_time|date:'c' }}">{{ end_time|date:'H:i' }}</time>
-              {% endwith %}
-            </span>
+            <div class="text-block">
+              <span class="schedule-time-range">
+                <time datetime="{{ el.start_time|date:'c' }}">{{ el.start_time|date:'H:i' }}</time>
+                <span> - </span>
+                {% with end_time=el.start_time|add:el.service.duration %}
+                <time datetime="{{ end_time|date:'c' }}">{{ end_time|date:'H:i' }}</time>
+                {% endwith %}
+              </span>
 
-            <span class="text-body-secondary schedule-time-duration"><i class="bi bi-clock"></i> {{ el.service.duration_min }} мин.</span>
+              <span class="text-body-secondary schedule-time-duration"><i class="bi bi-clock"></i>
+                {{ el.service.duration_min }} мин.</span>
+            </div>
+
+            <span>Записано: {{ el.active_bookings|length }} / {{ el.service.max_participants }}</span>
+
+            {% if el.active_bookings %}
+            <button class="accordion-btn"><i class="bi bi-chevron-up"></i></button>
+            {% endif %}
           </div>
 
-          <span>Записано: {{ el.active_bookings|length }} / {{ el.service.max_participants }}</span>
-
           {% if el.active_bookings %}
-          <button class="accordion-btn"><i class="bi bi-chevron-up"></i></button>
+          <div class="accordion-body">
+            <ul class="list-reset client-list">
+              {% for booking in el.active_bookings %}
+              <li class="client-item">
+                {% with client=booking.client %}
+
+                <div class="user-block mb-2">
+                  <img src="{{ client.avatar }}" alt="{{ client }}" class="user-img">
+
+                  <b class="client-name">{{ client }}</b>
+                </div>
+
+                <div>
+                  <a class="link-body-emphasis" href="mailto:{{ client.email }}"><i class="bi bi-envelope"></i>
+                    {{ client.email }}</a>
+                </div>
+
+                {% if client.phone_number %}
+                <div>
+                  <a class="link-body-emphasis" href="tel:{{ client.phone_number }}"><i class="bi bi-telephone"></i>
+                    {{ client.phone_number }}</a>
+                </div>
+                {% endif %}
+
+                <span><i class="bi bi-clock"></i> Время записи:
+                  {% if booking.booked_at.year == year %}{{ booking.booked_at|date:'j E в H:i' }}{% else %}{{ booking.booked_at|date:'j E Y в H:i' }}{% endif %}</span>
+                {% endwith %}
+              </li>
+              {% endfor %}
+            </ul>
+          </div>
           {% endif %}
         </div>
-
-        {% if el.active_bookings %}
-        <div class="accordion-body">
-          <ul class="list-reset classes-list">
-            {% for booking in el.active_bookings %}
-            <li class="classes-item">
-              {% with client=booking.client %}
-
-              <div class="user-block mb-2">
-                <img src="{{ client.avatar }}" alt="{{ client }}" class="user-img">
-
-                <b class="mb-0">{{ client }}</b>
-              </div>
-
-              <div>
-                <a class="link-body-emphasis" href="mailto:{{ client.email }}"><i class="bi bi-envelope"></i> {{ client.email }}</a>
-              </div>
-
-              {% if client.phone_number %}
-              <div>
-                <a class="link-body-emphasis" href="tel:{{ client.phone_number }}"><i class="bi bi-telephone"></i> {{ client.phone_number }}</a>
-              </div>
-              {% endif %}
-
-              <span><i class="bi bi-clock"></i> Время записи: {% if booking.booked_at.year == year %}{{ booking.booked_at|date:'j E в H:i' }}{% else %}{{ booking.booked_at|date:'j E Y в H:i' }}{% endif %}</span>
-              {% endwith %}
-            </li>
-            {% endfor %}
-          </ul>
-        </div>
-        {% endif %}
+        {% endfor %}
       </div>
-      {% endfor %}
     </div>
     {% endfor %}
   </div>
@@ -89,4 +96,5 @@
 
 {% block scripts %}
 <script src="{% static 'users/js/accordion.js' %}"></script>
+<script src="{% static 'schedule/js/sticky.js' %}"></script>
 {% endblock %}
