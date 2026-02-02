@@ -10,7 +10,7 @@
     data-schedule-id="{{ item.pk }}"
     data-booking-id="{{ booking_id }}"
     data-can-book="{% if item.is_available and canceled %}true{% else %}false{% endif %}"
-    data-can-cancel="{% if not canceled and item.day_before %}true{% else %}false{% endif %}">
+    data-can-cancel="{% if not canceled and item.is_cancellation_allowed %}true{% else %}false{% endif %}">
 
   <h5 class="mb-0 schedule__name">{{ item.service }}</h5>
 

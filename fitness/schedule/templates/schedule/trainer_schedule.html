@@ -67,7 +67,7 @@
                 </div>
                 {% endif %}
 
-                <span><i class="bi bi-clock"></i> Время записи: {{ booking.booked_at|to_booking_time }}</span>
+                <span><i class="bi bi-clock"></i> Время записи: {{ booking.booked_at|to_time }}</span>
                 {% endwith %}
               </li>
               {% empty %}

@@ -3,8 +3,9 @@ from datetime import datetime, timedelta
 from core.models import Service, Trainer
 from django.contrib.auth import get_user_model
 from django.db import models
-from django.template.defaultfilters import date as date_filter
 from django.utils import timezone
+
+from .templatetags.date_extras import to_time
 
 User = get_user_model()
 
@@ -77,6 +78,7 @@ client_fields = (
     "booked_at",
 )
 
+
 class NotCanceledManager(models.Manager):
     def get_queryset(self):
         return super().get_queryset().filter(canceled=False)
@@ -110,12 +112,7 @@ class Schedule(models.Model):
 
     def __str__(self):
         local_time = timezone.localtime(self.start_time)
-        now = timezone.localtime(timezone.now())
-
-        if now.year == local_time.year:
-            formatted = date_filter(local_time, "j E в H:i")
-        else:
-            formatted = date_filter(local_time, "j E Y в H:i")
+        formatted = to_time(local_time)
 
         return f"{self.service.name} - {formatted}"
 
@@ -143,18 +140,18 @@ class Schedule(models.Model):
         return bool(self.count_remained_seats > 0 and self.in_future)
 
     def __time_before(self, **kwargs) -> bool:
-        now = timezone.now()
+        now = timezone.localtime(timezone.now())
         booking_end_time = timezone.localtime(self.start_time) - timedelta(**kwargs)
 
-        return booking_end_time > timezone.localtime(now)
+        return booking_end_time > now
 
     @property
     def in_future(self) -> bool:
         return self.__time_before()
 
     @property
-    def day_before(self) -> bool:
-        return self.__time_before(days=1)
+    def is_cancellation_allowed(self) -> bool:
+        return self.__time_before(hours=6)
 
 
 class Booking(models.Model):

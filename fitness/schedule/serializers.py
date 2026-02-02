@@ -37,7 +37,7 @@ class ScheduleSerializer(serializers.ModelSerializer):
 
     @staticmethod
     def get_can_cancel(obj: Schedule) -> bool:
-        return bool(getattr(obj, "booking_id", None)) and obj.day_before
+        return bool(getattr(obj, "booking_id", None)) and obj.is_cancellation_allowed
 
     @staticmethod
     def get_start_time_ms(obj: Schedule) -> int:
@@ -86,7 +86,7 @@ class BookedScheduleSerializer(serializers.Serializer):
 
     @staticmethod
     def get_can_cancel(obj: Booking) -> bool:
-        return not obj.canceled and obj.schedule.day_before
+        return not obj.canceled and obj.schedule.is_cancellation_allowed
 
     @staticmethod
     def get_start_time_ms(obj: Booking) -> int:

@@ -213,8 +213,9 @@ def cancel(
     if reservation.canceled:
         result["message"] = f"Запись на '{reservation.schedule}' уже отменена!"
 
-    elif not reservation.schedule.day_before:
+    elif not reservation.schedule.is_cancellation_allowed:
         result["message"] = f"Отменить запись на '{reservation.schedule}' уже нельзя!"
+        setattr(reservation.schedule, "booking_id", reservation.pk)
 
     else:
         reservation.canceled = True
