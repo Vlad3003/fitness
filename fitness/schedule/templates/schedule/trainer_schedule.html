@@ -15,8 +15,6 @@
 
   {% if schedule %}
   <div class="classes">
-    {% now 'Y' as current_year %}
-
     {% for day in schedule %}
     <div class="classes-day">
       <span class="classes-date sticky-el">{{ day.date|to_day }}</span>
@@ -42,12 +40,9 @@
 
             <span>Записано: {{ el.active_bookings|length }} / {{ el.service.max_participants }}</span>
 
-            {% if el.active_bookings %}
-            <button class="accordion-btn"><i class="bi bi-chevron-up"></i></button>
-            {% endif %}
+            <button class="accordion-btn"></button>
           </div>
 
-          {% if el.active_bookings %}
           <div class="accordion-body">
             <ul class="list-reset client-list">
               {% for booking in el.active_bookings %}
@@ -72,14 +67,16 @@
                 </div>
                 {% endif %}
 
-                <span><i class="bi bi-clock"></i> Время записи:
-                  {% if booking.booked_at.year == year %}{{ booking.booked_at|date:'j E в H:i' }}{% else %}{{ booking.booked_at|date:'j E Y в H:i' }}{% endif %}</span>
+                <span><i class="bi bi-clock"></i> Время записи: {{ booking.booked_at|to_booking_time }}</span>
                 {% endwith %}
+              </li>
+              {% empty %}
+              <li class="client-item">
+                <span class="text-center">Никто ещё не записался на это занятие</span>
               </li>
               {% endfor %}
             </ul>
           </div>
-          {% endif %}
         </div>
         {% endfor %}
       </div>
