@@ -9,7 +9,7 @@ register = template.Library()
 
 
 @register.filter
-def to_day(day: date | datetime):
+def to_day(day: date | datetime) -> str:
     now = timezone.localtime(timezone.now()).date()
 
     if day == now:
@@ -22,3 +22,10 @@ def to_day(day: date | datetime):
         return date_format(day, "l, j E").lower()
     else:
         return date_format(day, "j E Y")
+
+@register.filter
+def to_booking_time(booked_at: datetime) -> str:
+    current_year = timezone.localtime(timezone.now()).year
+    _format = "j E в H:i" if booked_at.year == current_year else "j E Y в H:i"
+
+    return date_format(booked_at, _format)
